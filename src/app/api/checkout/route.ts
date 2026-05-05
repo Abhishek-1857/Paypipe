@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
   const { contractorId, amountUsd } = await request.json();
 
-  if (!contractorId || !amountUsd || amountUsd < 1 || amountUsd > 10000) {
+  if (!contractorId || !amountUsd || amountUsd < 1 || amountUsd > 10) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 

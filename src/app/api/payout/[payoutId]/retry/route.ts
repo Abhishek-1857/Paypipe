@@ -4,9 +4,9 @@ import { sendUsdc } from "@/lib/solana";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ payoutId: string }> }
+  { params }: { params: { payoutId: string } }
 ) {
-  const { payoutId } = await params;
+  const { payoutId } = params;
 
   const supabase = await createClient();
   const {

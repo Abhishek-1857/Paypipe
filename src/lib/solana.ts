@@ -13,7 +13,7 @@ import {
 import bs58 from "bs58";
 
 const USDC_DEVNET_MINT = new PublicKey(
-  "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+  "XBouzXTNYLEqmVG8P3EHhvTHLWzMD84hNmoZYktihcS"
 );
 const USDC_DECIMALS = 6;
 

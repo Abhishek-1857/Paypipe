@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, use } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/components/toast";
 import { truncateSig, solscanTxUrl, formatUsd } from "@/lib/utils";
 
@@ -21,9 +21,9 @@ interface Payout {
 export default function PayPage({
   params,
 }: {
-  params: Promise<{ contractorId: string }>;
+  params: { contractorId: string };
 }) {
-  const { contractorId } = use(params);
+  const { contractorId } = params;
   const [contractor, setContractor] = useState<Contractor | null>(null);
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(true);
@@ -79,8 +79,8 @@ export default function PayPage({
 
   async function handlePay() {
     const amountNum = parseFloat(amount);
-    if (!amountNum || amountNum < 1 || amountNum > 10000) {
-      toast("Amount must be between $1 and $10,000", "error");
+    if (!amountNum || amountNum < 1 || amountNum > 10) {
+      toast("Amount must be between $1 and $10", "error");
       return;
     }
 
@@ -178,7 +178,7 @@ export default function PayPage({
                 <input
                   type="number"
                   min="1"
-                  max="10000"
+                  max="10"
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -187,7 +187,7 @@ export default function PayPage({
                 />
               </div>
               <p className="text-xs text-zinc-400 mt-1.5">
-                Min $1 · Max $10,000 · Settled as USDC on Solana
+                Min $1 · Max $10 · Settled as USDC on Solana
               </p>
             </div>
 
