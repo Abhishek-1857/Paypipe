@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       owner_id: user.id,
       owner_email: user.email!,
       company_name: companyName || null,
+      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
     })
     .select("id, token, company_name, used, created_at, expires_at")
     .single();

@@ -17,9 +17,6 @@ interface Invite {
   id: string;
   token: string;
   company_name: string | null;
-  used: boolean;
-  created_at: string;
-  expires_at: string;
   invite_url?: string;
 }
 
@@ -30,12 +27,6 @@ function getInitials(name: string) {
 function truncateWallet(w: string) {
   if (w.length <= 12) return w;
   return `${w.slice(0, 6)}...${w.slice(-6)}`;
-}
-
-function inviteStatus(invite: Invite): { label: string; color: string; bg: string } {
-  if (invite.used) return { label: "Used", color: "var(--text-muted)", bg: "var(--bg-elevated)" };
-  if (new Date(invite.expires_at) < new Date()) return { label: "Expired", color: "var(--red)", bg: "var(--red-dim)" };
-  return { label: "Pending", color: "var(--green)", bg: "var(--green-dim)" };
 }
 
 export default function ContractorsPage() {
@@ -55,8 +46,6 @@ export default function ContractorsPage() {
   const [inviteCompanyName, setInviteCompanyName] = useState("");
   const [inviteGenerating, setInviteGenerating] = useState(false);
   const [generatedInvite, setGeneratedInvite] = useState<Invite | null>(null);
-  const [invites, setInvites] = useState<Invite[]>([]);
-  const [invitesLoading, setInvitesLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const { toast } = useToast();
@@ -107,26 +96,16 @@ export default function ContractorsPage() {
     }
   }
 
-  async function fetchInvites() {
-    setInvitesLoading(true);
-    const res = await fetch("/api/invites");
-    if (res.ok) {
-      const data: Invite[] = await res.json();
-      const appUrl = window.location.origin;
-      setInvites(data.map((i) => ({ ...i, invite_url: `${appUrl}/invite/${i.token}` })));
-    }
-    setInvitesLoading(false);
-  }
-
   function openInviteModal() {
     setShowInviteModal(true);
     setGeneratedInvite(null);
     setInviteCompanyName("");
-    fetchInvites();
+    setCopied(false);
   }
 
   async function handleGenerateInvite() {
     setInviteGenerating(true);
+    setGeneratedInvite(null);
     const res = await fetch("/api/invites/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -135,9 +114,8 @@ export default function ContractorsPage() {
     const data = await res.json();
     if (res.ok && data.invite) {
       const appUrl = window.location.origin;
-      const invite = { ...data.invite, invite_url: `${appUrl}/invite/${data.invite.token}` };
-      setGeneratedInvite(invite);
-      setInvites((prev) => [invite, ...prev]);
+      setGeneratedInvite({ ...data.invite, invite_url: `${appUrl}/invite/${data.invite.token}` });
+      setCopied(false);
     } else {
       toast(data.error || "Failed to generate invite", "error");
     }
@@ -360,11 +338,11 @@ export default function ContractorsPage() {
           onClick={() => setShowInviteModal(false)}
         >
           <div
-            className="card w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="card w-full max-w-lg flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between">
+            {/* Modal Header — never scrolls away */}
+            <div className="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between flex-shrink-0">
               <div>
                 <h2 className="font-heading font-semibold text-base text-[var(--text-primary)]">Invite a Contractor</h2>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">Share a link — they fill in their own details</p>
@@ -379,7 +357,7 @@ export default function ContractorsPage() {
               </button>
             </div>
 
-            <div className="px-6 py-5 space-y-5">
+            <div className="px-6 py-5 space-y-5 overflow-y-auto">
               {/* Company name field */}
               <div>
                 <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">
@@ -421,52 +399,8 @@ export default function ContractorsPage() {
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    Expires in 7 days · Can only be used once
+                    Expires in 15 minutes · Can only be used once
                   </p>
-                </div>
-              )}
-
-              {/* Previous invites */}
-              {(invites.length > 0 || invitesLoading) && (
-                <div>
-                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] font-medium mb-3">
-                    Previously Generated
-                  </p>
-                  {invitesLoading ? (
-                    <p className="text-xs text-[var(--text-muted)]">Loading...</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {invites.map((inv) => {
-                        const status = inviteStatus(inv);
-                        const url = inv.invite_url || `${window.location.origin}/invite/${inv.token}`;
-                        return (
-                          <div key={inv.id} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: "var(--bg-base)", border: "1px solid var(--border)" }}>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-mono-data text-[var(--text-muted)] truncate">{url}</p>
-                              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
-                                {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                                {inv.company_name && ` · ${inv.company_name}`}
-                              </p>
-                            </div>
-                            <span
-                              className="flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] px-2 py-1 rounded-md"
-                              style={{ background: status.bg, color: status.color }}
-                            >
-                              {status.label}
-                            </span>
-                            {!inv.used && new Date(inv.expires_at) > new Date() && (
-                              <button
-                                onClick={() => handleCopy(url)}
-                                className="flex-shrink-0 text-[11px] text-[var(--text-muted)] hover:text-[var(--green)] transition-colors"
-                              >
-                                Copy
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
