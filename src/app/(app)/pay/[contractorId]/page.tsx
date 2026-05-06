@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/components/toast";
-import { truncateSig, solscanTxUrl, formatUsd } from "@/lib/utils";
+import { TxHash } from "@/components/tx-hash";
+import { WalletAddress } from "@/components/wallet-address";
 
 interface Contractor {
   id: string;
@@ -18,6 +19,8 @@ interface Payout {
   amount_usd: number;
 }
 
+const steps = ["pending", "processing", "done"];
+
 export default function PayPage({
   params,
 }: {
@@ -30,7 +33,8 @@ export default function PayPage({
   const [paying, setPaying] = useState(false);
   const [polling, setPolling] = useState(false);
   const [completedPayout, setCompletedPayout] = useState<Payout | null>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,27 +50,30 @@ export default function PayPage({
 
   const pollForCompletion = useCallback(() => {
     setPolling(true);
+    setCurrentStep(0);
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(
-          `/api/payouts?contractorId=${contractorId}`
-        );
+        const res = await fetch(`/api/payouts?contractorId=${contractorId}`);
         if (!res.ok) return;
         const payouts: Payout[] = await res.json();
         const latest = payouts[0];
 
-        if (latest && (latest.status === "done" || latest.status === "failed")) {
-          clearInterval(interval);
-          setPolling(false);
+        if (latest) {
+          const stepIdx = steps.indexOf(latest.status);
+          if (stepIdx >= 0) setCurrentStep(stepIdx);
 
-          if (latest.status === "done") {
-            setCompletedPayout(latest);
-            setShowConfetti(true);
-            toast("USDC sent successfully!", "success");
-            setTimeout(() => setShowConfetti(false), 5000);
-          } else {
-            toast("Payout failed — you can retry from the dashboard", "error");
+          if (latest.status === "done" || latest.status === "failed") {
+            clearInterval(interval);
+            setPolling(false);
+
+            if (latest.status === "done") {
+              setCompletedPayout(latest);
+              setShowSuccess(true);
+              toast("USDC sent successfully!", "success");
+            } else {
+              toast("Payout failed — you can retry from the dashboard", "error");
+            }
           }
         }
       } catch {
@@ -91,9 +98,7 @@ export default function PayPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contractorId, amountUsd: amountNum }),
       });
-
       const data = await res.json();
-
       if (res.ok && data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {
@@ -108,7 +113,7 @@ export default function PayPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-zinc-500">
+      <div className="flex items-center justify-center py-20 text-[var(--text-muted)]">
         Loading...
       </div>
     );
@@ -116,131 +121,185 @@ export default function PayPage({
 
   if (!contractor) {
     return (
-      <div className="flex items-center justify-center py-20 text-zinc-500">
+      <div className="flex items-center justify-center py-20 text-[var(--text-muted)]">
         Contractor not found.
       </div>
     );
   }
 
   return (
-    <div className="max-w-lg mx-auto">
-      {showConfetti && <Confetti />}
+    <div className="max-w-[480px] mx-auto animate-fade-in relative z-[1]">
+      {showSuccess && <Confetti />}
 
-      <h1 className="text-2xl font-bold mb-8">Pay Contractor</h1>
-
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
-        <div className="mb-6">
-          <p className="text-sm text-zinc-500 mb-1">Contractor</p>
-          <p className="font-semibold text-lg">{contractor.name}</p>
+      {/* Contractor Info */}
+      <div className="card p-6 mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-[var(--bg-elevated)] flex items-center justify-center">
+            <span className="font-heading font-semibold text-[var(--green)]">
+              {contractor.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <h2 className="font-heading font-semibold text-lg text-[var(--text-primary)]">
+              {contractor.name}
+            </h2>
+            <WalletAddress address={contractor.solana_wallet} />
+          </div>
         </div>
+      </div>
 
-        <div className="mb-6">
-          <p className="text-sm text-zinc-500 mb-1">Solana Wallet</p>
-          <p className="font-mono text-sm break-all text-zinc-600 dark:text-zinc-400">
-            {contractor.solana_wallet}
-          </p>
-        </div>
-
-        {completedPayout ? (
-          <div className="border border-green-200 dark:border-green-800 rounded-lg p-5 bg-green-50 dark:bg-green-900/20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-green-600 text-lg">✓</span>
-              <p className="font-semibold text-green-800 dark:text-green-300">
-                Payment Complete
-              </p>
+      {completedPayout ? (
+        <div className="card p-6 animate-fade-in">
+          {/* Success checkmark */}
+          <div className="flex flex-col items-center py-4 mb-4">
+            <div className="w-16 h-16 rounded-full bg-[var(--green-dim)] flex items-center justify-center mb-4">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline
+                  points="6 12 10 16 18 8"
+                  stroke="var(--green)"
+                  strokeDasharray="24"
+                  className="animate-draw-check"
+                />
+              </svg>
             </div>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-              {formatUsd(Number(completedPayout.amount_usd))} in USDC sent
-              successfully.
+            <h3 className="font-heading font-bold text-lg text-[var(--text-primary)] mb-1">
+              Payment Complete
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
+              <span className="font-mono-data text-[var(--green)]">
+                ${Number(completedPayout.amount_usd).toFixed(2)}
+              </span>{" "}
+              USDC sent successfully
             </p>
             {completedPayout.solana_tx_sig && (
-              <a
-                href={solscanTxUrl(completedPayout.solana_tx_sig)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-500 hover:text-blue-400 font-mono"
-              >
-                View on Solscan →{" "}
-                {truncateSig(completedPayout.solana_tx_sig)}
-              </a>
+              <div className="card p-3 w-full flex items-center justify-between">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+                  Transaction
+                </span>
+                <TxHash hash={completedPayout.solana_tx_sig} />
+              </div>
             )}
           </div>
-        ) : (
-          <>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                Amount (USD)
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
-                  $
-                </span>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="100.00"
-                  className="w-full pl-7 pr-3 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+        </div>
+      ) : (
+        <div className="card p-6">
+          {polling ? (
+            <div className="py-6">
+              {/* Progress steps */}
+              <div className="flex items-center justify-between mb-8 px-2">
+                {steps.map((step, i) => (
+                  <div key={step} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+                          i <= currentStep
+                            ? "bg-[var(--green)] text-[#0A0A0B]"
+                            : "bg-[var(--bg-elevated)] text-[var(--text-muted)]"
+                        }`}
+                      >
+                        {i < currentStep ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="6 12 10 16 18 8" />
+                          </svg>
+                        ) : (
+                          i + 1
+                        )}
+                      </div>
+                      <span className="text-[10px] text-[var(--text-muted)] mt-1.5 capitalize">
+                        {step === "done" ? "confirmed" : step}
+                      </span>
+                    </div>
+                    {i < steps.length - 1 && (
+                      <div className="flex-1 h-[2px] mx-2 mb-5">
+                        <div
+                          className={`h-full rounded transition-colors ${
+                            i < currentStep
+                              ? "bg-[var(--green)]"
+                              : "bg-[var(--border)]"
+                          }`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <p className="text-xs text-zinc-400 mt-1.5">
-                Min $1 · Max $10 · Settled as USDC on Solana
-              </p>
-            </div>
-
-            {polling ? (
-              <div className="text-center py-4">
-                <div className="inline-flex items-center gap-2 text-sm text-blue-500">
-                  <svg
-                    className="animate-spin h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
-                  Processing USDC transfer on Solana...
+              <div className="text-center">
+                <div className="h-1 rounded-full overflow-hidden bg-[var(--bg-elevated)] mb-3">
+                  <div className="h-full progress-bar rounded-full" />
                 </div>
-                <p className="text-xs text-zinc-400 mt-2">
-                  This usually takes a few seconds
+                <p className="text-xs text-[var(--text-muted)]">
+                  Processing USDC transfer on Solana...
                 </p>
               </div>
-            ) : (
+            </div>
+          ) : (
+            <>
+              {/* Amount Input */}
+              <div className="py-6 text-center">
+                <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-4">
+                  Amount
+                </label>
+                <div className="relative inline-flex items-center">
+                  <span className="text-[var(--text-muted)] font-mono-data text-5xl mr-1">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    step="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-40 text-5xl font-mono-data text-[var(--green)] bg-transparent border-none outline-none text-center placeholder:text-[var(--border-bright)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+                {amount && parseFloat(amount) > 0 && (
+                  <p className="text-sm text-[var(--text-muted)] mt-2 font-mono-data animate-fade-in">
+                    ≈ {parseFloat(amount).toFixed(2)} USDC on Solana
+                  </p>
+                )}
+              </div>
+
+              {/* Fee breakdown */}
+              <div className="border-t border-[var(--border)] pt-4 mb-4">
+                <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1.5">
+                  <span>Solana network fee</span>
+                  <span className="font-mono-data">~$0.001</span>
+                </div>
+                <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1.5">
+                  <span>Settlement time</span>
+                  <span className="font-mono-data">{"<"}2 seconds</span>
+                </div>
+              </div>
+
               <div className="flex gap-3">
                 <button
                   onClick={handlePay}
                   disabled={paying || !amount}
-                  className="flex-1 py-2.5 px-4 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 text-sm btn-primary"
                 >
-                  {paying ? "Redirecting..." : "Pay via Card"}
+                  {paying ? "Redirecting to checkout..." : "Pay via Card"}
                 </button>
                 <button
-                  onClick={() => {
-                    pollForCompletion();
-                  }}
-                  className="px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                  onClick={pollForCompletion}
+                  className="px-4 py-3 text-sm btn-secondary"
+                  title="Check status"
                 >
-                  Check Status
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 4 23 10 17 10" />
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                  </svg>
                 </button>
               </div>
-            )}
-          </>
-        )}
-      </div>
+
+              <p className="text-[10px] text-[var(--text-muted)] text-center mt-3">
+                Min $1 · Max $10 · Settled as USDC on Solana
+              </p>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -256,7 +315,7 @@ function Confetti() {
             left: `${Math.random() * 100}%`,
             animationDelay: `${Math.random() * 2}s`,
             animationDuration: `${2 + Math.random() * 3}s`,
-            backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][
+            backgroundColor: ["#00D97E", "#4D9EFF", "#F5A623", "#FF4D4D", "#8B5CF6"][
               i % 5
             ],
             width: `${6 + Math.random() * 6}px`,

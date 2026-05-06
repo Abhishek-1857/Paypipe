@@ -20,6 +20,12 @@ export function useToast() {
 
 let nextId = 0;
 
+const borderColors = {
+  success: "border-l-[var(--green)]",
+  error: "border-l-[var(--red)]",
+  info: "border-l-[var(--amber)]",
+};
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -38,13 +44,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-slide-in ${
-              t.type === "success"
-                ? "bg-green-600 text-white"
-                : t.type === "error"
-                ? "bg-red-600 text-white"
-                : "bg-zinc-800 text-zinc-100"
-            }`}
+            className={`animate-slide-in-right card border-l-[3px] ${borderColors[t.type]} px-4 py-3 text-sm font-medium text-[var(--text-primary)] min-w-[280px]`}
           >
             {t.message}
           </div>

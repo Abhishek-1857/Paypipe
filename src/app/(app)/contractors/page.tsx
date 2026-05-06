@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/toast";
+import { WalletAddress } from "@/components/wallet-address";
 
 interface Contractor {
   id: string;
@@ -29,9 +30,7 @@ export default function ContractorsPage() {
 
   async function fetchContractors() {
     const res = await fetch("/api/contractors");
-    if (res.ok) {
-      setContractors(await res.json());
-    }
+    if (res.ok) setContractors(await res.json());
     setLoading(false);
   }
 
@@ -66,31 +65,26 @@ export default function ContractorsPage() {
     setSubmitting(false);
   }
 
-  function truncateWallet(w: string) {
-    if (w.length <= 12) return w;
-    return `${w.slice(0, 6)}...${w.slice(-4)}`;
-  }
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">Contractors</h1>
+    <div className="animate-fade-in relative z-[1]">
+      <div className="flex items-center justify-between mb-6">
+        <div />
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          className={`px-4 py-2 text-sm ${showForm ? "btn-secondary" : "btn-primary"}`}
         >
           {showForm ? "Cancel" : "Add Contractor"}
         </button>
       </div>
 
-      {/* Add Contractor Form */}
+      {/* Add Form */}
       {showForm && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 mb-6">
-          <h2 className="font-semibold mb-4">New Contractor</h2>
+        <div className="card p-6 mb-6 animate-fade-in">
+          <h2 className="font-heading font-semibold text-sm mb-4">New Contractor</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">
                   Name *
                 </label>
                 <input
@@ -98,11 +92,11 @@ export default function ContractorsPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Jane Smith"
-                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 text-sm input-base"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">
                   Email
                 </label>
                 <input
@@ -110,12 +104,12 @@ export default function ContractorsPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="jane@example.com"
-                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 text-sm input-base"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">
                 Solana Wallet Address *
               </label>
               <input
@@ -123,18 +117,16 @@ export default function ContractorsPage() {
                 value={wallet}
                 onChange={(e) => setWallet(e.target.value)}
                 placeholder="Enter base58 Solana address"
-                className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 text-sm font-mono-data input-base"
               />
             </div>
             {formError && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {formError}
-              </p>
+              <p className="text-sm text-[var(--red)]">{formError}</p>
             )}
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors disabled:opacity-50"
+              className="px-6 py-2.5 text-sm btn-primary"
             >
               {submitting ? "Adding..." : "Add Contractor"}
             </button>
@@ -142,53 +134,78 @@ export default function ContractorsPage() {
         </div>
       )}
 
-      {/* Contractors List */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-zinc-500">Loading...</div>
-        ) : contractors.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500">
-            No contractors yet. Add your first contractor to get started.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-zinc-500 border-b border-zinc-200 dark:border-zinc-800">
-                  <th className="px-5 py-3 font-medium">Name</th>
-                  <th className="px-5 py-3 font-medium">Email</th>
-                  <th className="px-5 py-3 font-medium">Wallet</th>
-                  <th className="px-5 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {contractors.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"
-                  >
-                    <td className="px-5 py-3 font-medium">{c.name}</td>
-                    <td className="px-5 py-3 text-zinc-500">
-                      {c.email || "—"}
-                    </td>
-                    <td className="px-5 py-3 font-mono text-xs text-zinc-500">
-                      {truncateWallet(c.solana_wallet)}
-                    </td>
-                    <td className="px-5 py-3">
-                      <Link
-                        href={`/pay/${c.id}`}
-                        className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
-                      >
-                        Pay
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Contractor Cards Grid */}
+      {loading ? (
+        <div className="py-20 text-center text-[var(--text-muted)]">Loading...</div>
+      ) : contractors.length === 0 && !showForm ? (
+        <div className="py-20 text-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 opacity-60">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <line x1="19" y1="8" x2="19" y2="14" />
+            <line x1="22" y1="11" x2="16" y2="11" />
+          </svg>
+          <p className="text-sm text-[var(--text-muted)] mb-2">No contractors yet.</p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="text-sm text-[var(--green)] hover:underline"
+          >
+            Add your first contractor →
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+          {contractors.map((c) => (
+            <div
+              key={c.id}
+              className="p-5 flex flex-col rounded-[10px] card"
+            >
+              <div className="flex-1 mb-5">
+                <h3 className="font-heading font-semibold text-[16px] text-[var(--text-primary)] mb-1">
+                  {c.name}
+                </h3>
+                <p className="text-xs text-[var(--text-muted)] mb-3">
+                  {c.email || "No email"}
+                </p>
+                <WalletAddress address={c.solana_wallet} />
+              </div>
+              <div className="flex items-center justify-between pt-4 border-t border-[var(--border)]">
+                <Link
+                  href={`/pay/${c.id}`}
+                  className="px-5 py-2 text-xs btn-outline-green"
+                >
+                  Pay
+                </Link>
+              </div>
+            </div>
+          ))}
+
+          {/* Add contractor card */}
+          <button
+            onClick={() => setShowForm(true)}
+            className="rounded-[10px] p-5 flex flex-col items-center justify-center gap-2 min-h-[180px] transition-colors"
+            style={{
+              border: "1.5px dashed var(--border-bright)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "var(--green)";
+              e.currentTarget.querySelector("svg")!.setAttribute("stroke", "var(--green)");
+              e.currentTarget.querySelector("span")!.style.color = "var(--green)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--border-bright)";
+              e.currentTarget.querySelector("svg")!.setAttribute("stroke", "var(--text-muted)");
+              e.currentTarget.querySelector("span")!.style.color = "var(--text-muted)";
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "stroke 150ms" }}>
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span className="text-xs text-[var(--text-muted)]" style={{ transition: "color 150ms" }}>Add Contractor</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
