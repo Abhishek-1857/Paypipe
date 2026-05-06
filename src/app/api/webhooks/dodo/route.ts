@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "standardwebhooks";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendUsdc } from "@/lib/solana";
+import { sendPayoutEmails } from "@/lib/emails";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -27,6 +28,7 @@ export async function POST(request: NextRequest) {
   const metadata = payment.metadata || {};
   const contractorId = metadata.contractor_id;
   const amountUsd = parseFloat(metadata.amount_usd);
+  const ownerId = metadata.owner_id;
   const paymentId = payment.payment_id;
 
   if (!contractorId || !amountUsd || !paymentId) {
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   const { data: contractor } = await supabase
     .from("contractors")
-    .select("solana_wallet")
+    .select("solana_wallet, name, email")
     .eq("id", contractorId)
     .single();
 
@@ -75,8 +77,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Contractor not found" }, { status: 400 });
   }
 
+  let txSig: string | null = null;
+
   try {
-    const txSig = await sendUsdc(contractor.solana_wallet, amountUsd);
+    txSig = await sendUsdc(contractor.solana_wallet, amountUsd);
     await supabase
       .from("payouts")
       .update({ status: "done", solana_tx_sig: txSig })
@@ -87,6 +91,34 @@ export async function POST(request: NextRequest) {
       .from("payouts")
       .update({ status: "failed", error_message: message })
       .eq("id", payout.id);
+    return NextResponse.json({ received: true });
+  }
+
+  // Send confirmation emails — fire and forget, never blocks the response
+  if (txSig) {
+    let founderEmail = payment.customer?.email as string | undefined;
+
+    // Fall back to looking up by owner_id if not in payment object
+    if (!founderEmail && ownerId) {
+      const { data: user } = await supabase.auth.admin.getUserById(ownerId);
+      founderEmail = user?.user?.email;
+    }
+
+    if (founderEmail) {
+      sendPayoutEmails({
+        contractorName: contractor.name,
+        contractorEmail: contractor.email ?? null,
+        founderEmail,
+        amountUsd,
+        solanaSignature: txSig,
+        cluster: "devnet",
+      }).then(async () => {
+        await supabase
+          .from("payouts")
+          .update({ emails_sent: true })
+          .eq("id", payout.id);
+      });
+    }
   }
 
   return NextResponse.json({ received: true });
