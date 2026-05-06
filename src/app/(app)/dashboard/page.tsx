@@ -24,12 +24,6 @@ interface Payout {
   };
 }
 
-interface Contractor {
-  id: string;
-  name: string;
-  created_at: string;
-}
-
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
@@ -44,13 +38,10 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
-  const [contractors, setContractors] = useState<Contractor[]>([]);
+  const [contractors, setContractors] = useState<{ id: string; name: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [selectedContractor, setSelectedContractor] = useState("");
-  const [quickAmount, setQuickAmount] = useState("");
-  const [quickPaying, setQuickPaying] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
@@ -115,28 +106,6 @@ function DashboardContent() {
     }
     setRetrying(null);
     fetchPayouts();
-  }
-
-  async function handleQuickPay() {
-    if (!selectedContractor || !quickAmount) return;
-    const amount = parseFloat(quickAmount);
-    if (amount < 1 || amount > 10) {
-      toast("Amount must be between $1 and $10", "error");
-      return;
-    }
-    setQuickPaying(true);
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contractorId: selectedContractor, amountUsd: amount }),
-    });
-    const data = await res.json();
-    if (res.ok && data.checkout_url) {
-      window.location.href = data.checkout_url;
-    } else {
-      toast(data.error || "Failed to create checkout", "error");
-      setQuickPaying(false);
-    }
   }
 
   const now = new Date();
@@ -264,10 +233,8 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Main: Table + Send Payout */}
-      <div className="flex gap-4" style={{ minHeight: "calc(100vh - 340px)" }}>
-        {/* Recent Payouts */}
-        <div className="card flex-1 overflow-hidden flex flex-col">
+      {/* Recent Payouts */}
+      <div className="card overflow-hidden flex flex-col" style={{ minHeight: "calc(100vh - 340px)" }}>
           <div className="px-5 py-4 border-b border-[var(--border)] flex items-start justify-between">
             <div>
               <h2 className="font-heading font-semibold text-sm text-[var(--text-primary)]">
@@ -295,7 +262,7 @@ function DashboardContent() {
                 )}
                 {exporting ? "Exporting..." : "Export CSV"}
               </button>
-              <Link href="/contractors" className="text-xs text-[var(--green)] hover:underline flex items-center gap-1">
+              <Link href="/payouts" className="text-xs text-[var(--green)] hover:underline flex items-center gap-1">
                 View all
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
@@ -391,66 +358,6 @@ function DashboardContent() {
               </table>
             </div>
           )}
-        </div>
-
-        {/* Send a Payout Panel */}
-        <div className="w-[300px] self-start hidden lg:block card p-5">
-          <h3 className="font-heading font-semibold text-sm text-[var(--text-primary)]">
-            Send a Payout
-          </h3>
-          <p className="text-[11px] text-[var(--text-muted)] mt-0.5 mb-5">
-            Instant settlement on Solana
-          </p>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">
-                Contractor
-              </label>
-              <select
-                value={selectedContractor}
-                onChange={(e) => setSelectedContractor(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm input-base appearance-none"
-              >
-                <option value="">Select contractor</option>
-                {contractors.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">
-                Amount
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] font-mono-data text-sm">$</span>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  step="0.01"
-                  value={quickAmount}
-                  onChange={(e) => setQuickAmount(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full pl-7 pr-3 py-2.5 text-sm font-mono-data input-base"
-                />
-              </div>
-            </div>
-            <button
-              onClick={handleQuickPay}
-              disabled={quickPaying || !selectedContractor || !quickAmount}
-              className="w-full py-3 text-sm btn-primary"
-            >
-              {quickPaying ? "Redirecting..." : "Pay Now"}
-            </button>
-            <p className="text-[10px] text-[var(--text-muted)] text-center flex items-center justify-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="var(--green)" strokeWidth="1.5" />
-                <path d="M8 12l3 3 5-5" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Settles on Solana in &lt;2s · Fee ~$0.001
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
