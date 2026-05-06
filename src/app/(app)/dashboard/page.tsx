@@ -312,14 +312,7 @@ function DashboardContent() {
                             >
                               <span className="text-[10px] font-bold" style={{ color: "var(--bg-base)" }}>{initials}</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-[var(--text-primary)]">{name || "—"}</span>
-                              {p.bulk_payout_id && (
-                                <span className="text-[9px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded" style={{ background: "rgba(0,217,126,0.12)", color: "var(--green)", border: "1px solid rgba(0,217,126,0.2)" }}>
-                                  BULK
-                                </span>
-                              )}
-                            </div>
+                            <span className="font-medium text-[var(--text-primary)]">{name || "—"}</span>
                           </div>
                         </td>
                         <td className="px-5 py-3.5">
