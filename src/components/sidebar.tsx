@@ -64,7 +64,12 @@ const navItems = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -75,12 +80,32 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[200px] bg-[var(--bg-surface)] border-r border-[var(--border)] flex flex-col z-40">
+    <aside
+      className="fixed left-0 top-0 bottom-0 bg-[var(--bg-surface)] border-r border-[var(--border)] flex flex-col z-40 transition-[width] duration-300 overflow-hidden"
+      style={{ width: collapsed ? "64px" : "200px" }}
+    >
       {/* Logo */}
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-4 py-5 border-b border-[var(--border)]">
-        <FlashPayLogo size={28} />
-        <FlashPayWordmark className="text-[15px]" />
-      </Link>
+      <div className="flex items-center border-b border-[var(--border)] h-14 flex-shrink-0 px-3">
+        <Link href="/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
+          <FlashPayLogo size={28} />
+          {!collapsed && <FlashPayWordmark className="text-[15px] whitespace-nowrap" />}
+        </Link>
+        <button
+          onClick={onToggle}
+          className="ml-auto flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <svg
+            width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className="transition-transform duration-300"
+            style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)" }}
+          >
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+        </button>
+      </div>
 
       {/* Navigation */}
       <nav className="flex flex-col gap-0.5 px-2 py-3 flex-1">
@@ -92,17 +117,20 @@ export function Sidebar() {
             <Link
               key={item.label}
               href={item.href}
-              className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm transition-colors ${
+              title={collapsed ? item.label : undefined}
+              className={`relative flex items-center gap-2.5 rounded-md text-sm transition-colors ${
+                collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
+              } ${
                 isActive
                   ? "bg-[var(--green-dim)] text-[var(--green)]"
                   : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
               }`}
             >
-              {isActive && (
+              {isActive && !collapsed && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r bg-[var(--green)]" />
               )}
               {item.icon}
-              <span className="font-medium">{item.label}</span>
+              {!collapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
             </Link>
           );
         })}
@@ -112,14 +140,17 @@ export function Sidebar() {
       <div className="px-2 py-3 border-t border-[var(--border)]">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red-dim)] transition-colors w-full"
+          title={collapsed ? "Sign out" : undefined}
+          className={`flex items-center gap-2.5 rounded-md text-sm text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red-dim)] transition-colors w-full ${
+            collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
+          }`}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          <span className="font-medium">Sign out</span>
+          {!collapsed && <span className="font-medium">Sign out</span>}
         </button>
       </div>
     </aside>

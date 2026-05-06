@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { TestBadge } from "@/components/test-banner";
@@ -15,6 +16,7 @@ const pageTitles: Record<string, string> = {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
   const title =
     Object.entries(pageTitles).find(([path]) =>
       pathname.startsWith(path)
@@ -22,8 +24,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <ToastProvider>
-      <Sidebar />
-      <div className="ml-[200px] min-h-screen relative z-[1]">
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
+      <div
+        className="min-h-screen relative z-[1] transition-[margin] duration-300"
+        style={{ marginLeft: collapsed ? "64px" : "200px" }}
+      >
         <header className="h-14 border-b border-[var(--border)] flex items-center justify-between px-8 bg-[var(--bg-base)]/80 backdrop-blur-sm sticky top-0 z-10">
           <h1 className="font-heading font-semibold text-xl text-[var(--text-primary)]">
             {title}
