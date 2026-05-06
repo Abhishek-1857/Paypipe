@@ -246,6 +246,83 @@ export async function sendBulkPayoutSummaryEmail(params: BulkPayoutSummaryParams
   }
 }
 
+export interface ContractorOnboardedParams {
+  founderEmail: string;
+  contractorName: string;
+  contractorEmail: string | null;
+  contractorWallet: string;
+  contractorId: string;
+  appUrl: string;
+}
+
+function contractorOnboardedEmailHtml(params: ContractorOnboardedParams): string {
+  const { contractorName, contractorEmail, contractorWallet, contractorId, appUrl } = params;
+  const truncatedWallet = `${contractorWallet.slice(0, 6)}...${contractorWallet.slice(-6)}`;
+  const payUrl = `${appUrl}/pay/${contractorId}`;
+
+  const rows = [
+    { label: "Name", value: contractorName, color: "#F2F2F3", bg: "#111113" },
+    { label: "Email", value: contractorEmail || "—", color: "#C0C0CC", bg: "#161618" },
+    { label: "Solana Wallet", value: truncatedWallet, color: "#F2F2F3", bg: "#111113", mono: true },
+    { label: "Status", value: "✓ Ready to receive payments", color: "#00D97E", bg: "#161618" },
+  ];
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${contractorName} joined FlashPay</title></head>
+<body style="margin:0;padding:0;background:#0A0A0B;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0B;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#111113;border-radius:12px;border:1px solid #1E1E24;overflow:hidden;">
+
+        <tr><td style="padding:32px 40px 24px;text-align:center;border-bottom:1px solid #1E1E24;">
+          <div style="font-size:24px;font-weight:900;color:#00D97E;letter-spacing:-0.5px;">FlashPay</div>
+        </td></tr>
+
+        <tr><td style="padding:40px 40px 32px;">
+          <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#F2F2F3;text-align:center;">New Contractor Onboarded</h1>
+          <p style="margin:0 0 32px;font-size:14px;color:#8A8A96;text-align:center;">
+            <span style="color:#00D97E;font-weight:700;">${contractorName}</span> has joined FlashPay and is ready to be paid.
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:8px;overflow:hidden;border:1px solid #1E1E24;margin-bottom:32px;">
+            ${rows.map((r) => `<tr>
+              <td style="padding:12px 16px;font-size:13px;color:#8A8A96;background:${r.bg};width:35%;">${r.label}</td>
+              <td style="padding:12px 16px;font-size:13px;color:${r.color};background:${r.bg};${(r as { mono?: boolean }).mono ? "font-family:monospace;" : ""}font-weight:${r.color === "#00D97E" ? "700" : "400"};">${r.value}</td>
+            </tr>`).join("")}
+          </table>
+
+          <div style="text-align:center;">
+            <a href="${payUrl}" style="display:inline-block;background:#00D97E;color:#0A0A0B;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:8px;">
+              Pay ${contractorName} Now →
+            </a>
+          </div>
+        </td></tr>
+
+        <tr><td style="padding:20px 40px;border-top:1px solid #1E1E24;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by FlashPay · Built on Solana · Payments by Dodo Payments</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendContractorOnboardedEmail(params: ContractorOnboardedParams): Promise<void> {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to: params.founderEmail,
+      subject: `${params.contractorName} has joined FlashPay and is ready to be paid`,
+      html: contractorOnboardedEmailHtml(params),
+    });
+  } catch (err) {
+    console.error("[sendContractorOnboardedEmail] Failed:", err);
+  }
+}
+
 export async function sendPayoutEmails(params: PayoutEmailParams): Promise<void> {
   const { contractorName, contractorEmail, founderEmail, amountUsd } = params;
   const amt = formatAmount(amountUsd);

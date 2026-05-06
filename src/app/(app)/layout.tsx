@@ -8,6 +8,7 @@ import { ToastProvider } from "@/components/toast";
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/contractors": "Contractors",
+  "/bulk-payout": "Bulk Payout",
   "/pay": "Send Payment",
 };
 

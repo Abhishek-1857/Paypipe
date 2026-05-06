@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/toast";
+import { createClient } from "@/lib/supabase/browser";
 
 interface Contractor {
   id: string;
@@ -12,6 +13,16 @@ interface Contractor {
   created_at: string;
 }
 
+interface Invite {
+  id: string;
+  token: string;
+  company_name: string | null;
+  used: boolean;
+  created_at: string;
+  expires_at: string;
+  invite_url?: string;
+}
+
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
@@ -19,6 +30,12 @@ function getInitials(name: string) {
 function truncateWallet(w: string) {
   if (w.length <= 12) return w;
   return `${w.slice(0, 6)}...${w.slice(-6)}`;
+}
+
+function inviteStatus(invite: Invite): { label: string; color: string; bg: string } {
+  if (invite.used) return { label: "Used", color: "var(--text-muted)", bg: "var(--bg-elevated)" };
+  if (new Date(invite.expires_at) < new Date()) return { label: "Expired", color: "var(--red)", bg: "var(--red-dim)" };
+  return { label: "Pending", color: "var(--green)", bg: "var(--green-dim)" };
 }
 
 export default function ContractorsPage() {
@@ -32,11 +49,42 @@ export default function ContractorsPage() {
   const [email, setEmail] = useState("");
   const [wallet, setWallet] = useState("");
   const [formError, setFormError] = useState("");
+
+  // Invite modal state
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteCompanyName, setInviteCompanyName] = useState("");
+  const [inviteGenerating, setInviteGenerating] = useState(false);
+  const [generatedInvite, setGeneratedInvite] = useState<Invite | null>(null);
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   const { toast } = useToast();
 
   useEffect(() => {
     fetchContractors();
     fetchPayouts();
+  }, []);
+
+  // Realtime subscription for new contractors
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("contractors-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "contractors" },
+        (payload) => {
+          const incoming = payload.new as Contractor;
+          setContractors((prev) => {
+            if (prev.some((c) => c.id === incoming.id)) return prev;
+            return [incoming, ...prev];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   async function fetchContractors() {
@@ -57,6 +105,49 @@ export default function ContractorsPage() {
       }
       setTotalPaidMap(map);
     }
+  }
+
+  async function fetchInvites() {
+    setInvitesLoading(true);
+    const res = await fetch("/api/invites");
+    if (res.ok) {
+      const data: Invite[] = await res.json();
+      const appUrl = window.location.origin;
+      setInvites(data.map((i) => ({ ...i, invite_url: `${appUrl}/invite/${i.token}` })));
+    }
+    setInvitesLoading(false);
+  }
+
+  function openInviteModal() {
+    setShowInviteModal(true);
+    setGeneratedInvite(null);
+    setInviteCompanyName("");
+    fetchInvites();
+  }
+
+  async function handleGenerateInvite() {
+    setInviteGenerating(true);
+    const res = await fetch("/api/invites/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ company_name: inviteCompanyName }),
+    });
+    const data = await res.json();
+    if (res.ok && data.invite) {
+      const appUrl = window.location.origin;
+      const invite = { ...data.invite, invite_url: `${appUrl}/invite/${data.invite.token}` };
+      setGeneratedInvite(invite);
+      setInvites((prev) => [invite, ...prev]);
+    } else {
+      toast(data.error || "Failed to generate invite", "error");
+    }
+    setInviteGenerating(false);
+  }
+
+  async function handleCopy(url: string) {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -110,9 +201,24 @@ export default function ContractorsPage() {
             className="w-full pl-9 pr-3 py-2 text-sm input-base"
           />
         </div>
+
+        <button
+          onClick={openInviteModal}
+          className="px-4 py-2 text-sm flex items-center gap-1.5 rounded-lg font-medium transition-colors"
+          style={{ border: "1px solid var(--green)", color: "var(--green)", background: "transparent" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--green-dim)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          Invite Contractor
+        </button>
+
         <button
           onClick={() => { setShowForm(!showForm); if (!showForm) window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          className={`ml-auto px-4 py-2 text-sm flex items-center gap-1.5 ${showForm ? "btn-secondary" : "btn-primary"}`}
+          className={`px-4 py-2 text-sm flex items-center gap-1.5 ${showForm ? "btn-secondary" : "btn-primary"}`}
         >
           {!showForm && (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -160,7 +266,6 @@ export default function ContractorsPage() {
             const totalPaid = totalPaidMap[c.id] || 0;
             return (
               <div key={c.id} className="card flex flex-col overflow-hidden">
-                {/* Header */}
                 <div className="p-4 flex items-start gap-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
@@ -184,7 +289,6 @@ export default function ContractorsPage() {
                   </button>
                 </div>
 
-                {/* Wallet row */}
                 <div className="px-4 py-2.5 flex items-center justify-between border-t border-[var(--border)]">
                   <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -197,7 +301,6 @@ export default function ContractorsPage() {
                   </span>
                 </div>
 
-                {/* Total paid row */}
                 <div className="px-4 py-2.5 flex items-center justify-between border-t border-[var(--border)]">
                   <span className="text-xs text-[var(--text-muted)]">Total paid</span>
                   <span className="font-mono-data text-sm font-semibold text-[var(--green)]">
@@ -205,16 +308,11 @@ export default function ContractorsPage() {
                   </span>
                 </div>
 
-                {/* Pay button */}
                 <div className="p-3 border-t border-[var(--border)]">
                   <Link
                     href={`/pay/${c.id}`}
                     className="flex items-center justify-center gap-2 w-full py-2.5 text-sm rounded-lg font-medium transition-colors"
-                    style={{
-                      background: "var(--green-dim)",
-                      color: "var(--green)",
-                      border: "1px solid var(--green-border)",
-                    }}
+                    style={{ background: "var(--green-dim)", color: "var(--green)", border: "1px solid var(--green-border)" }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.background = "var(--green)";
                       (e.currentTarget as HTMLElement).style.color = "var(--bg-base)";
@@ -234,7 +332,7 @@ export default function ContractorsPage() {
             );
           })}
 
-          {/* Add contractor ghost card */}
+          {/* Ghost card */}
           <button
             onClick={() => { setShowForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
             className="min-h-[210px] rounded-xl flex flex-col items-center justify-center gap-3 transition-all group"
@@ -242,10 +340,7 @@ export default function ContractorsPage() {
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--green)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-bright)"; }}
           >
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)" }}
-            >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center transition-colors" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:stroke-[var(--green)] transition-colors">
                 <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -254,6 +349,128 @@ export default function ContractorsPage() {
               Add Contractor
             </span>
           </button>
+        </div>
+      )}
+
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => setShowInviteModal(false)}
+        >
+          <div
+            className="card w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between">
+              <div>
+                <h2 className="font-heading font-semibold text-base text-[var(--text-primary)]">Invite a Contractor</h2>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">Share a link — they fill in their own details</p>
+              </div>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-5">
+              {/* Company name field */}
+              <div>
+                <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">
+                  Your Company Name <span className="normal-case">(optional — shown to contractor)</span>
+                </label>
+                <input
+                  type="text"
+                  value={inviteCompanyName}
+                  onChange={(e) => setInviteCompanyName(e.target.value)}
+                  placeholder="e.g. Acme Inc."
+                  className="w-full px-3 py-2.5 text-sm input-base"
+                />
+              </div>
+
+              <button
+                onClick={handleGenerateInvite}
+                disabled={inviteGenerating}
+                className="w-full py-3 text-sm btn-primary"
+              >
+                {inviteGenerating ? "Generating..." : "Generate Invite Link"}
+              </button>
+
+              {/* Generated link */}
+              {generatedInvite?.invite_url && (
+                <div className="animate-fade-in">
+                  <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: "var(--bg-base)", border: "1px solid var(--green-border)" }}>
+                    <span className="flex-1 text-xs font-mono-data text-[var(--green)] truncate">
+                      {generatedInvite.invite_url}
+                    </span>
+                    <button
+                      onClick={() => handleCopy(generatedInvite.invite_url!)}
+                      className="flex-shrink-0 px-3 py-1.5 text-xs rounded-md font-medium transition-colors"
+                      style={{ background: copied ? "var(--green)" : "var(--green-dim)", color: copied ? "var(--bg-base)" : "var(--green)" }}
+                    >
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-2 flex items-center gap-1">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    Expires in 7 days · Can only be used once
+                  </p>
+                </div>
+              )}
+
+              {/* Previous invites */}
+              {(invites.length > 0 || invitesLoading) && (
+                <div>
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] font-medium mb-3">
+                    Previously Generated
+                  </p>
+                  {invitesLoading ? (
+                    <p className="text-xs text-[var(--text-muted)]">Loading...</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {invites.map((inv) => {
+                        const status = inviteStatus(inv);
+                        const url = inv.invite_url || `${window.location.origin}/invite/${inv.token}`;
+                        return (
+                          <div key={inv.id} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: "var(--bg-base)", border: "1px solid var(--border)" }}>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-mono-data text-[var(--text-muted)] truncate">{url}</p>
+                              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                                {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                {inv.company_name && ` · ${inv.company_name}`}
+                              </p>
+                            </div>
+                            <span
+                              className="flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] px-2 py-1 rounded-md"
+                              style={{ background: status.bg, color: status.color }}
+                            >
+                              {status.label}
+                            </span>
+                            {!inv.used && new Date(inv.expires_at) > new Date() && (
+                              <button
+                                onClick={() => handleCopy(url)}
+                                className="flex-shrink-0 text-[11px] text-[var(--text-muted)] hover:text-[var(--green)] transition-colors"
+                              >
+                                Copy
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
