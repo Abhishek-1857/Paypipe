@@ -7,6 +7,10 @@ import { StatusBadge } from "@/components/status-badge";
 import { TxHash } from "@/components/tx-hash";
 import { formatDate } from "@/lib/utils";
 import { useToast } from "@/components/toast";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 
 interface Payout {
   id: string;
@@ -141,6 +145,32 @@ function DashboardContent() {
   const monthDiff = thisMonth - lastMonthCount;
   const prevMonthName = lastMonthStart.toLocaleString("default", { month: "long" });
 
+  // Last 30 days area chart data
+  const dailyData = (() => {
+    const days: { date: string; amount: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const total = payouts
+        .filter((p) => {
+          const pd = new Date(p.created_at);
+          return pd.getDate() === d.getDate() && pd.getMonth() === d.getMonth() && pd.getFullYear() === d.getFullYear() && p.status === "done";
+        })
+        .reduce((s, p) => s + Number(p.amount_usd), 0);
+      days.push({ date: key, amount: total });
+    }
+    return days;
+  })();
+
+  // Status donut data
+  const statusCounts = payouts.reduce<Record<string, number>>((acc, p) => {
+    acc[p.status] = (acc[p.status] || 0) + 1;
+    return acc;
+  }, {});
+  const donutData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+  const donutColors: Record<string, string> = { done: "#00D97E", pending: "#F59E0B", failed: "#EF4444", processing: "#6366F1" };
+
   return (
     <div className="animate-fade-in relative z-[1]">
       {/* Stat Cards */}
@@ -230,6 +260,71 @@ function DashboardContent() {
               {monthDiff >= 0 ? "+" : ""}{monthDiff} vs {prevMonthName}
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+        {/* Area chart — spans 2 cols */}
+        <div className="card p-5 lg:col-span-2">
+          <p className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium mb-4">
+            Payout Volume · Last 30 Days
+          </p>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={dailyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00D97E" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#00D97E" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                tickLine={false}
+                axisLine={false}
+                interval={6}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => `$${v}`}
+              />
+              <Tooltip
+                contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "8px", fontSize: "12px", color: "var(--text-primary)" }}
+                cursor={{ stroke: "var(--green)", strokeWidth: 1, strokeDasharray: "4 2" }}
+                formatter={(v) => [`$${Number(v).toFixed(2)}`, "Paid out"]}
+              />
+              <Area type="monotone" dataKey="amount" stroke="#00D97E" strokeWidth={2} fill="url(#greenGrad)" dot={false} activeDot={{ r: 4, fill: "#00D97E", strokeWidth: 0 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Donut chart */}
+        <div className="card p-5 flex flex-col">
+          <p className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium mb-4">
+            Status Breakdown
+          </p>
+          {donutData.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center text-xs text-[var(--text-muted)]">No data yet</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie data={donutData} cx="50%" cy="45%" innerRadius={48} outerRadius={68} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                  {donutData.map((entry) => (
+                    <Cell key={entry.name} fill={donutColors[entry.name] || "#6366F1"} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "8px", fontSize: "12px", color: "var(--text-primary)" }}
+                  formatter={(v, name) => [v, String(name).charAt(0).toUpperCase() + String(name).slice(1)]}
+                />
+                <Legend iconType="circle" iconSize={8} formatter={(v) => <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{v.charAt(0).toUpperCase() + v.slice(1)}</span>} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 
