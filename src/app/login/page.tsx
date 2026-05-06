@@ -26,6 +26,14 @@ export default function LoginPage() {
       .then((r) => r.json())
       .then((data) => { if (data) setLatestPayout(data); })
       .catch(() => {});
+
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        window.location.href = "/dashboard";
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

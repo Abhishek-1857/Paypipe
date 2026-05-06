@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
-import { AmountDisplay } from "@/components/amount-display";
 import { TxHash } from "@/components/tx-hash";
 import { formatDate } from "@/lib/utils";
 import { useToast } from "@/components/toast";
@@ -27,17 +26,16 @@ interface Payout {
 interface Contractor {
   id: string;
   name: string;
+  created_at: string;
+}
+
+function getInitials(name: string) {
+  return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
 export default function DashboardPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="py-20 text-center text-[var(--text-muted)]">
-          Loading...
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="py-20 text-center text-[var(--text-muted)]">Loading...</div>}>
       <DashboardContent />
     </Suspense>
   );
@@ -111,69 +109,150 @@ function DashboardContent() {
     }
   }
 
+  const now = new Date();
+
   const totalPaid = payouts
     .filter((p) => p.status === "done")
     .reduce((sum, p) => sum + Number(p.amount_usd), 0);
 
-  const contractorCount = new Set(
-    payouts.map((p) => p.contractors?.name).filter(Boolean)
-  ).size;
+  // This month vs last month for paid amount
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const thisMonthPaid = payouts
+    .filter((p) => p.status === "done" && new Date(p.created_at) >= thisMonthStart)
+    .reduce((s, p) => s + Number(p.amount_usd), 0);
+  const lastMonthPaid = payouts
+    .filter((p) => p.status === "done" && new Date(p.created_at) >= lastMonthStart && new Date(p.created_at) < thisMonthStart)
+    .reduce((s, p) => s + Number(p.amount_usd), 0);
+  const paidTrendPct = lastMonthPaid > 0 ? Math.round(((thisMonthPaid - lastMonthPaid) / lastMonthPaid) * 100) : null;
+
+  const contractorCount = contractors.length;
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const newContractorsThisWeek = contractors.filter((c) => new Date(c.created_at) > oneWeekAgo).length;
 
   const thisMonth = payouts.filter((p) => {
     const d = new Date(p.created_at);
-    const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
+  const lastMonthCount = payouts.filter((p) => {
+    const d = new Date(p.created_at);
+    return d.getMonth() === lastMonthStart.getMonth() && d.getFullYear() === lastMonthStart.getFullYear();
+  }).length;
+  const monthDiff = thisMonth - lastMonthCount;
+  const prevMonthName = lastMonthStart.toLocaleString("default", { month: "long" });
+
   return (
     <div className="animate-fade-in relative z-[1]">
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 stagger-children">
-        <div className="stat-card p-5" style={{ borderBottom: "2px solid var(--green)" }}>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5 stagger-children">
+        {/* Total Paid Out */}
+        <div className="card p-5">
           <div className="flex items-start justify-between mb-3">
             <span className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium">
               Total Paid Out
             </span>
-            <span className="text-lg">💸</span>
+            <div className="w-7 h-7 rounded-lg bg-[var(--green-dim)] flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+            </div>
           </div>
-          <AmountDisplay amount={totalPaid} size="xl" />
-          <p className="text-[10px] text-[var(--text-muted)] mt-1.5">all time</p>
+          <p className="text-[32px] font-mono-data font-semibold text-[var(--green)] leading-none">
+            ${totalPaid.toFixed(2)}
+          </p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-[10px] text-[var(--text-muted)]">all time</p>
+            {paidTrendPct !== null && (
+              <span className="flex items-center gap-0.5 text-[11px] font-mono-data text-[var(--green)]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
+                </svg>
+                {paidTrendPct > 0 ? "+" : ""}{paidTrendPct}%
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Active Contractors */}
         <div className="card p-5">
           <div className="flex items-start justify-between mb-3">
             <span className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium">
               Active Contractors
             </span>
-            <span className="text-lg">👥</span>
+            <div className="w-7 h-7 rounded-lg bg-[var(--green-dim)] flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
           </div>
           <p className="text-[32px] font-mono-data font-semibold text-[var(--text-primary)] leading-none">
             {contractorCount}
           </p>
-          <p className="text-[10px] text-[var(--text-muted)] mt-1.5">registered wallets</p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-[10px] text-[var(--text-muted)]">registered wallets</p>
+            {newContractorsThisWeek > 0 && (
+              <span className="flex items-center gap-0.5 text-[11px] font-mono-data text-[var(--green)]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
+                </svg>
+                +{newContractorsThisWeek} this week
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* This Month */}
         <div className="card p-5">
           <div className="flex items-start justify-between mb-3">
             <span className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium">
               This Month
             </span>
-            <span className="text-lg">📅</span>
+            <div className="w-7 h-7 rounded-lg bg-[var(--green-dim)] flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
           </div>
           <p className="text-[32px] font-mono-data font-semibold text-[var(--text-primary)] leading-none">
             {thisMonth}
           </p>
-          <p className="text-[10px] text-[var(--text-muted)] mt-1.5">payouts</p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-[10px] text-[var(--text-muted)]">payouts</p>
+            <span className={`flex items-center gap-0.5 text-[11px] font-mono-data ${monthDiff >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {monthDiff >= 0
+                  ? <><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></>
+                  : <><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></>
+                }
+              </svg>
+              {monthDiff >= 0 ? "+" : ""}{monthDiff} vs {prevMonthName}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Main content: Table + Send Payout */}
-      <div className="flex gap-4" style={{ minHeight: "calc(100vh - 320px)" }}>
-        {/* Payouts Table */}
+      {/* Main: Table + Send Payout */}
+      <div className="flex gap-4" style={{ minHeight: "calc(100vh - 340px)" }}>
+        {/* Recent Payouts */}
         <div className="card flex-1 overflow-hidden flex flex-col">
-          <div className="px-5 py-4 border-b border-[var(--border)]">
-            <h2 className="font-heading font-semibold text-sm text-[var(--text-primary)]">
-              Recent Payouts
-            </h2>
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-start justify-between">
+            <div>
+              <h2 className="font-heading font-semibold text-sm text-[var(--text-primary)]">
+                Recent Payouts
+              </h2>
+              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Latest transactions on Solana</p>
+            </div>
+            <Link href="/contractors" className="text-xs text-[var(--green)] hover:underline flex items-center gap-1">
+              View all
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+              </svg>
+            </Link>
           </div>
+
           {loading ? (
             <div className="p-12 text-center text-[var(--text-muted)] text-sm flex-1 flex items-center justify-center">
               Loading...
@@ -181,15 +260,10 @@ function DashboardContent() {
           ) : payouts.length === 0 ? (
             <div className="p-12 text-center flex-1 flex flex-col items-center justify-center">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3 opacity-60">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               <p className="text-sm text-[var(--text-muted)] mb-2">No payouts yet.</p>
-              <Link
-                href="/contractors"
-                className="text-sm text-[var(--green)] hover:underline"
-              >
+              <Link href="/contractors" className="text-sm text-[var(--green)] hover:underline">
                 Send your first payment →
               </Link>
             </div>
@@ -207,42 +281,54 @@ function DashboardContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {payouts.map((p) => (
-                    <tr key={p.id} className="table-row">
-                      <td className="px-5 py-3.5 font-medium text-[var(--text-primary)]">
-                        {p.contractors?.name || "—"}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className="font-mono-data text-[var(--green)]">
-                          ${Number(p.amount_usd).toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <StatusBadge status={p.status} />
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {p.solana_tx_sig ? (
-                          <TxHash hash={p.solana_tx_sig} />
-                        ) : (
-                          <span className="text-[var(--text-muted)]">—</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-[var(--text-muted)] text-xs">
-                        {formatDate(p.created_at)}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {p.status === "failed" && (
-                          <button
-                            onClick={() => handleRetry(p.id)}
-                            disabled={retrying === p.id}
-                            className="text-xs text-[var(--amber)] hover:text-[var(--green)] font-medium disabled:opacity-50 transition-colors"
-                          >
-                            {retrying === p.id ? "Retrying..." : "Retry"}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {payouts.map((p) => {
+                    const name = p.contractors?.name || "";
+                    const initials = name ? getInitials(name) : "?";
+                    return (
+                      <tr key={p.id} className="table-row">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ background: "linear-gradient(135deg, var(--green-light), var(--green))" }}
+                            >
+                              <span className="text-[10px] font-bold" style={{ color: "var(--bg-base)" }}>{initials}</span>
+                            </div>
+                            <span className="font-medium text-[var(--text-primary)]">{name || "—"}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className="font-mono-data text-[var(--green)]">
+                            ${Number(p.amount_usd).toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <StatusBadge status={p.status} />
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {p.solana_tx_sig ? (
+                            <TxHash hash={p.solana_tx_sig} />
+                          ) : (
+                            <span className="text-[var(--text-muted)]">—</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 text-[var(--text-muted)] text-xs">
+                          {formatDate(p.created_at)}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {p.status === "failed" && (
+                            <button
+                              onClick={() => handleRetry(p.id)}
+                              disabled={retrying === p.id}
+                              className="text-xs text-[var(--amber)] hover:text-[var(--green)] font-medium disabled:opacity-50 transition-colors"
+                            >
+                              {retrying === p.id ? "Retrying..." : "Retry"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -250,12 +336,13 @@ function DashboardContent() {
         </div>
 
         {/* Send a Payout Panel */}
-        <div
-          className="w-[320px] self-start hidden lg:block rounded-[10px] p-5 card"
-        >
-          <h3 className="font-heading font-semibold text-sm text-[var(--text-primary)] mb-5">
+        <div className="w-[300px] self-start hidden lg:block card p-5">
+          <h3 className="font-heading font-semibold text-sm text-[var(--text-primary)]">
             Send a Payout
           </h3>
+          <p className="text-[11px] text-[var(--text-muted)] mt-0.5 mb-5">
+            Instant settlement on Solana
+          </p>
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">
@@ -268,9 +355,7 @@ function DashboardContent() {
               >
                 <option value="">Select contractor</option>
                 {contractors.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>
@@ -279,9 +364,7 @@ function DashboardContent() {
                 Amount
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] font-mono-data text-sm">
-                  $
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] font-mono-data text-sm">$</span>
                 <input
                   type="number"
                   min="1"
@@ -290,7 +373,7 @@ function DashboardContent() {
                   value={quickAmount}
                   onChange={(e) => setQuickAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full pl-7 pr-3 py-2.5 text-sm font-mono-data input-base input-lg"
+                  className="w-full pl-7 pr-3 py-2.5 text-sm font-mono-data input-base"
                 />
               </div>
             </div>
@@ -302,11 +385,11 @@ function DashboardContent() {
               {quickPaying ? "Redirecting..." : "Pay Now"}
             </button>
             <p className="text-[10px] text-[var(--text-muted)] text-center flex items-center justify-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="opacity-50">
-                <circle cx="12" cy="12" r="10" stroke="#00D97E" strokeWidth="1.5"/>
-                <path d="M8 12l3 3 5-5" stroke="#00D97E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="var(--green)" strokeWidth="1.5" />
+                <path d="M8 12l3 3 5-5" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Settles on Solana in {"<"}2s · Fee ~$0.001
+              Settles on Solana in &lt;2s · Fee ~$0.001
             </p>
           </div>
         </div>
