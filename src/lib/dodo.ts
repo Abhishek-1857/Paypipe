@@ -32,7 +32,7 @@ export async function createCheckoutSession(
       email: ownerEmail,
       name: ownerEmail.split("@")[0],
     },
-    return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?payout=success`,
+    return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?payout=${payoutId}`,
   });
 
   return session;
@@ -64,7 +64,7 @@ export async function createBulkCheckoutSession(
       email: ownerEmail,
       name: ownerEmail.split("@")[0],
     },
-    return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?payout=bulk`,
+    return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?payout=bulk_${bulkPayoutId}`,
   });
 
   return session;

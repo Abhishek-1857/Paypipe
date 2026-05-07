@@ -62,13 +62,45 @@ function DashboardContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const payout = searchParams.get("payout");
-    if (payout === "success") {
-      toast("Payment initiated! Waiting for confirmation...", "success");
-    } else if (payout === "bulk") {
+    const payoutParam = searchParams.get("payout");
+    if (!payoutParam) return;
+
+    if (payoutParam.startsWith("bulk_")) {
       toast("Bulk payout initiated! Sending USDC to all contractors...", "success");
+      return;
     }
-  }, [searchParams, toast]);
+
+    // payoutParam is a payout ID — poll its status
+    let cancelled = false;
+    async function checkStatus() {
+      for (let i = 0; i < 10; i++) {
+        if (cancelled) return;
+        const res = await fetch("/api/payouts");
+        if (!res.ok) break;
+        const all = await res.json();
+        const p = all.find((x: { id: string }) => x.id === payoutParam);
+        if (!p) break;
+        if (p.status === "done") {
+          toast("Payment confirmed! USDC sent successfully.", "success");
+          fetchPayouts();
+          return;
+        }
+        if (p.status === "failed") {
+          toast(p.error_message || "Payment failed", "error");
+          fetchPayouts();
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+      if (!cancelled) {
+        toast("Payment is being processed...", "success");
+        fetchPayouts();
+      }
+    }
+    checkStatus();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     fetchPayouts();
