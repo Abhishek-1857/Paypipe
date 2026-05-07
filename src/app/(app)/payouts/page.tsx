@@ -10,6 +10,7 @@ interface Payout {
   status: string;
   solana_tx_sig: string | null;
   bulk_payout_id: string | null;
+  settlement_ms: number | null;
   created_at: string;
   contractor_id: string;
   contractors: { name: string; solana_wallet: string; owner_id: string };
@@ -190,7 +191,14 @@ export default function PayoutsPage() {
                         ${Number(p.amount_usd).toFixed(2)}
                       </td>
                       <td className="px-5 py-3.5">
-                        <StatusBadge status={p.status} />
+                        <div className="flex flex-col gap-0.5">
+                          <StatusBadge status={p.status} />
+                          {p.status === "done" && p.settlement_ms && (
+                            <span className="text-[10px] font-mono-data" style={{ color: "var(--green)" }}>
+                              ⚡ {(p.settlement_ms / 1000).toFixed(1)}s
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-5 py-3.5 text-[var(--text-muted)] text-xs hidden md:table-cell">
                         {formatDate(p.created_at)}
@@ -246,7 +254,11 @@ export default function PayoutsPage() {
                               <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.08em] mb-1.5 font-medium">Settlement</p>
                               <div className="space-y-0.5">
                                 <p className="text-xs text-[var(--text-secondary)]">Network fee: <span className="font-mono-data">~$0.001</span></p>
-                                <p className="text-xs text-[var(--text-secondary)]">Time: <span className="font-mono-data text-[var(--green)]">&lt;2s</span></p>
+                                <p className="text-xs text-[var(--text-secondary)]">Time:{" "}
+                                  <span className="font-mono-data" style={{ color: "var(--green)" }}>
+                                    {p.settlement_ms ? `⚡ ${(p.settlement_ms / 1000).toFixed(1)}s` : "<2s"}
+                                  </span>
+                                </p>
                                 <p className="text-xs text-[var(--text-secondary)]">Network: <span>Solana devnet</span></p>
                               </div>
                             </div>

@@ -19,6 +19,7 @@ interface Payout {
   solana_tx_sig: string | null;
   dodo_payment_id: string | null;
   bulk_payout_id: string | null;
+  settlement_ms: number | null;
   created_at: string;
   contractor_id: string;
   contractors: {
@@ -543,7 +544,14 @@ function DashboardContent() {
                           </span>
                         </td>
                         <td className="px-5 py-3.5">
-                          <StatusBadge status={p.status} />
+                          <div className="flex flex-col gap-0.5">
+                            <StatusBadge status={p.status} />
+                            {p.status === "done" && p.settlement_ms && (
+                              <span className="text-[10px] font-mono-data" style={{ color: "var(--green)" }}>
+                                ⚡ {(p.settlement_ms / 1000).toFixed(1)}s
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-5 py-3.5">
                           {p.solana_tx_sig ? (

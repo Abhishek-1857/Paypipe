@@ -12,6 +12,7 @@ interface Payout {
   solana_tx_sig: string | null;
   dodo_payment_id: string | null;
   bulk_payout_id: string | null;
+  settlement_ms: number | null;
   error_message?: string | null;
   created_at: string;
   contractors: {
@@ -98,7 +99,17 @@ export default function PayoutDetailPage() {
           </div>
           <StatusBadge status={payout.status} />
         </div>
-        <p className="text-xs text-[var(--text-muted)]">{date}</p>
+        {payout.status === "done" && payout.settlement_ms && (
+          <div className="mt-3">
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-mono-data font-semibold glow-green"
+              style={{ background: "rgba(0,217,126,0.12)", color: "var(--green)", border: "1px solid rgba(0,217,126,0.2)" }}
+            >
+              ⚡ Settled in {(payout.settlement_ms / 1000).toFixed(1)}s
+            </span>
+          </div>
+        )}
+        <p className="text-xs text-[var(--text-muted)] mt-3">{date}</p>
         {payout.error_message && (
           <div className="mt-3 px-3 py-2 rounded-lg text-xs text-[var(--red)]" style={{ background: "var(--red-dim)" }}>
             Error: {payout.error_message}
@@ -136,6 +147,14 @@ export default function PayoutDetailPage() {
             }
           />
           <DetailRow label="Network Fee" value={payout.solana_tx_sig ? "~$0.001" : "—"} />
+          <DetailRow
+            label="Settlement Speed"
+            value={
+              payout.settlement_ms
+                ? <span className="font-mono-data glow-green" style={{ color: "var(--green)" }}>⚡ {(payout.settlement_ms / 1000).toFixed(1)}s</span>
+                : <span className="font-mono-data" style={{ color: "var(--green)" }}>&lt;2s</span>
+            }
+          />
           <DetailRow label="Network" value="Solana devnet" />
           {payout.dodo_payment_id && (
             <DetailRow label="Payment ID" value={payout.dodo_payment_id} mono />

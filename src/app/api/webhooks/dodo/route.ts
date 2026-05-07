@@ -82,14 +82,16 @@ export async function POST(request: NextRequest) {
       }
 
       try {
+        const sentAt = Date.now();
         const txSig = await sendUsdc(contractor.solana_wallet, Number(item.amount_usd));
+        const settlementMs = Date.now() - sentAt;
 
         await supabase.from("bulk_payout_items").update({ status: "done", solana_tx_sig: txSig }).eq("id", item.id);
 
         // Update pre-inserted processing row; fall back to insert if missing
         const { data: updatedRows } = await supabase
           .from("payouts")
-          .update({ status: "done", solana_tx_sig: txSig, dodo_payment_id: `${paymentId}_${item.id}` })
+          .update({ status: "done", solana_tx_sig: txSig, dodo_payment_id: `${paymentId}_${item.id}`, settlement_ms: settlementMs })
           .eq("bulk_payout_id", bulkPayoutId)
           .eq("contractor_id", item.contractor_id)
           .eq("status", "processing")
@@ -103,6 +105,7 @@ export async function POST(request: NextRequest) {
             bulk_payout_id: bulkPayoutId,
             status: "done",
             solana_tx_sig: txSig,
+            settlement_ms: settlementMs,
           });
         }
 
@@ -221,10 +224,12 @@ export async function POST(request: NextRequest) {
   let txSig: string | null = null;
 
   try {
+    const sentAt = Date.now();
     txSig = await sendUsdc(contractor.solana_wallet, amountUsd);
+    const settlementMs = Date.now() - sentAt;
     await supabase
       .from("payouts")
-      .update({ status: "done", solana_tx_sig: txSig })
+      .update({ status: "done", solana_tx_sig: txSig, settlement_ms: settlementMs })
       .eq("id", payout.id);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
