@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
-import { FlashPayLogo, FlashPayWordmark } from "@/components/logo";
+import { RemloLogo, RemloWordmark } from "@/components/logo";
 
 const navItems = [
   {
@@ -89,8 +89,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center border-b border-[var(--border)] h-14 flex-shrink-0 px-3">
         <Link href="/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
-          <FlashPayLogo size={28} />
-          {!collapsed && <FlashPayWordmark className="text-[15px] whitespace-nowrap" />}
+          <RemloLogo size={28} />
+          {!collapsed && <RemloWordmark className="text-[15px] whitespace-nowrap" />}
         </Link>
         <button
           onClick={onToggle}

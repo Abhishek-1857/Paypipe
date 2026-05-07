@@ -91,7 +91,7 @@ function DashboardContent() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `flashpay-payouts-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `remlo-payouts-${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

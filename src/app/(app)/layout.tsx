@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const title =
     Object.entries(pageTitles).find(([path]) =>
       pathname.startsWith(path)
-    )?.[1] || "FlashPay";
+    )?.[1] || "Remlo";
 
   return (
     <ToastProvider>

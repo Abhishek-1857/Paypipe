@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/browser";
-import { FlashPayLogo, FlashPayWordmark } from "@/components/logo";
+import { RemloLogo, RemloWordmark } from "@/components/logo";
 
 interface LatestPayout {
   amount_usd: number;
@@ -76,10 +76,10 @@ export default function LoginPage() {
     },
     {
       q: "What if a transfer fails?",
-      a: "Solana transactions are final and near-instant — failures are extremely rare (unlike bank wires which fail regularly). If a transfer does fail, FlashPay retries automatically and notifies you immediately.",
+      a: "Solana transactions are final and near-instant — failures are extremely rare (unlike bank wires which fail regularly). If a transfer does fail, Remlo retries automatically and notifies you immediately.",
     },
     {
-      q: "How does FlashPay make money?",
+      q: "How does Remlo make money?",
       a: "We charge a small platform fee on each payout. There are no monthly subscription fees, no hidden charges, and no FX markup. You only pay when you pay your contractors.",
     },
     {
@@ -99,11 +99,11 @@ export default function LoginPage() {
       <nav className="fixed top-0 inset-x-0 z-50 glass">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <FlashPayLogo size={36} />
-            <FlashPayWordmark className="text-lg" />
+            <RemloLogo size={36} />
+            <RemloWordmark className="text-lg" />
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-[var(--text-secondary)]">
-            <a href="#problem" className="hover:text-white transition-colors">Why FlashPay</a>
+            <a href="#problem" className="hover:text-white transition-colors">Why Remlo</a>
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
@@ -183,7 +183,7 @@ export default function LoginPage() {
                 />
               ))}
               <div className="absolute" style={{ top: -56, left: -56 }}>
-                <FlashPayLogo size={112} animate />
+                <RemloLogo size={112} animate />
               </div>
               {[
                 { delay: 0, distance: 90, duration: 15, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
@@ -290,7 +290,7 @@ export default function LoginPage() {
               Card in. <span className="text-gradient">USDC out.</span>
             </h2>
             <p className="text-[var(--text-secondary)] text-lg mt-4 max-w-2xl mx-auto">
-              FlashPay replaces your bank wire with a Solana transfer. You pay with a card. Your contractor gets USDC. That&apos;s it.
+              Remlo replaces your bank wire with a Solana transfer. You pay with a card. Your contractor gets USDC. That&apos;s it.
             </p>
           </div>
 
@@ -305,7 +305,7 @@ export default function LoginPage() {
                 },
                 {
                   icon: "🔄", n: 2, t: "We handle the conversion",
-                  d: "FlashPay instantly converts your payment to USDC — a stablecoin always worth exactly $1. No exchange rate risk. No hidden conversion fees.",
+                  d: "Remlo instantly converts your payment to USDC — a stablecoin always worth exactly $1. No exchange rate risk. No hidden conversion fees.",
                 },
                 {
                   icon: "✅", n: 3, t: "Contractor receives USDC",
@@ -340,7 +340,7 @@ export default function LoginPage() {
                   <th className="px-6 py-4 text-left text-[var(--text-muted)] font-medium text-xs uppercase tracking-wider w-1/3"></th>
                   <th className="px-6 py-4 text-center font-medium text-[var(--text-muted)] text-xs uppercase tracking-wider">Traditional Wire</th>
                   <th className="px-6 py-4 text-center font-semibold text-sm" style={{ color: 'var(--green)', background: 'rgba(0,217,126,0.05)' }}>
-                    FlashPay ⚡
+                    Remlo ⚡
                   </th>
                 </tr>
               </thead>
@@ -379,7 +379,7 @@ export default function LoginPage() {
       <section id="features" className="py-32 border-t border-[rgba(255,255,255,0.05)]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="max-w-2xl mb-16">
-            <div className="font-mono-data text-xs text-[var(--green)] mb-3">{"// WHY FLASHPAY"}</div>
+            <div className="font-mono-data text-xs text-[var(--green)] mb-3">{"// WHY REMLO"}</div>
             <h2 className="font-heading font-bold text-4xl md:text-5xl mb-4 tracking-tight">
               Built for the <span className="text-gradient italic">speed of money</span>
             </h2>
@@ -396,7 +396,7 @@ export default function LoginPage() {
               { icon: "🔑", tag: null, title: "Self-Custody Ready", desc: "Recipients keep their keys. Connect Phantom, Solflare, Backpack.", stat: "Non-custodial" },
               { icon: "⚙️", tag: null, title: "Programmable Payouts", desc: "Schedule, batch, stream — automate payroll with smart contracts.", stat: "API-first" },
               { icon: "📊", tag: null, title: "Compliance Built-In", desc: "KYB, AML, and tax reporting handled out of the box.", stat: "SOC 2" },
-              { icon: "📋", tag: "NEW", title: "Invoice Upload", desc: "Upload a PDF invoice and FlashPay automatically extracts the contractor name and amount. One click to pay.", stat: null },
+              { icon: "📋", tag: "NEW", title: "Invoice Upload", desc: "Upload a PDF invoice and Remlo automatically extracts the contractor name and amount. One click to pay.", stat: null },
               { icon: "👥", tag: "BULK", title: "Bulk Payroll", desc: "Pay your entire team in one checkout. Select all contractors, set amounts, one Dodo payment — we handle the rest.", stat: null },
               { icon: "🔗", tag: "SELF-SERVE", title: "Contractor Onboarding", desc: "Send a unique invite link to your contractor. They add their own wallet address. No back-and-forth needed.", stat: null },
             ].map((f) => (
@@ -452,12 +452,12 @@ export default function LoginPage() {
               </ul>
             </div>
 
-            {/* FlashPay — highlighted */}
+            {/* Remlo — highlighted */}
             <div className="rounded-2xl p-6 border-2 relative" style={{ background: 'rgba(0,217,126,0.05)', borderColor: 'var(--green)' }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-mono-data font-bold" style={{ background: 'var(--green)', color: '#0B0F19' }}>
                 RECOMMENDED
               </div>
-              <div className="text-lg font-heading font-bold mb-5 text-[var(--green)]">FlashPay ⚡</div>
+              <div className="text-lg font-heading font-bold mb-5 text-[var(--green)]">Remlo ⚡</div>
               <ul className="space-y-3">
                 {[
                   "Under 2 seconds",
@@ -701,8 +701,8 @@ export default function LoginPage() {
       <footer className="border-t border-[rgba(255,255,255,0.05)] py-10">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <FlashPayLogo size={28} />
-            <FlashPayWordmark className="text-sm" />
+            <RemloLogo size={28} />
+            <RemloWordmark className="text-sm" />
             <span className="text-xs text-[var(--text-muted)] ml-3 font-mono-data">&copy; 2026</span>
           </div>
           <div className="text-xs text-[var(--text-muted)] font-mono-data">

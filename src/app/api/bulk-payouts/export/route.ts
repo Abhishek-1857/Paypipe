@@ -93,7 +93,7 @@ export async function GET() {
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv",
-      "Content-Disposition": `attachment; filename="flashpay-bulk-payouts-${today}.csv"`,
+      "Content-Disposition": `attachment; filename="remlo-bulk-payouts-${today}.csv"`,
     },
   });
 }

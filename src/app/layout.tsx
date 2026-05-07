@@ -21,9 +21,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FlashPay — Instant Contractor Payouts on Solana",
+  title: "Remlo — Pay contractors worldwide in seconds",
   description:
-    "Pay global contractors via card, settle instantly in USDC on Solana.",
+    "Global contractor payouts. Powered by Solana.",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({
