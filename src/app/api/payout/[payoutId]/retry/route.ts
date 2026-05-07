@@ -34,6 +34,13 @@ export async function POST(
     );
   }
 
+  if (!payout.dodo_payment_id) {
+    return NextResponse.json(
+      { error: "Card payment was never completed — cannot retry Solana transfer" },
+      { status: 400 }
+    );
+  }
+
   const serviceClient = createServiceClient();
 
   await serviceClient

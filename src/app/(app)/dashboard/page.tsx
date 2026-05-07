@@ -673,7 +673,7 @@ function DashboardContent() {
                           {formatDate(p.created_at)}
                         </td>
                         <td className="px-5 py-3.5">
-                          {p.status === "failed" && (
+                          {p.status === "failed" && p.dodo_payment_id && (
                             <button
                               onClick={() => handleRetry(p.id)}
                               disabled={retrying === p.id}
