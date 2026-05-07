@@ -20,16 +20,31 @@ export async function POST(request: NextRequest) {
 
   const event = JSON.parse(body);
 
-  if (event.type !== "payment.succeeded") {
-    return NextResponse.json({ received: true });
-  }
-
   const payment = event.data;
   const metadata = payment.metadata || {};
   const paymentId = payment.payment_id;
   const ownerId = metadata.owner_id;
 
   const supabase = createServiceClient();
+
+  // ── Handle failed payments ───────────────────────────────────────────────
+  if (event.type === "payment.failed") {
+    const preInsertedPayoutId = metadata.payout_id;
+    const bulkPayoutId = metadata.bulk_payout_id;
+
+    if (metadata.is_bulk === "true" && bulkPayoutId) {
+      await supabase.from("bulk_payouts").update({ status: "failed" }).eq("id", bulkPayoutId);
+      await supabase.from("payouts").update({ status: "failed", error_message: "Payment failed" }).eq("bulk_payout_id", bulkPayoutId).in("status", ["pending", "processing"]);
+    } else if (preInsertedPayoutId) {
+      await supabase.from("payouts").update({ status: "failed", error_message: "Payment failed" }).eq("id", preInsertedPayoutId);
+    }
+    return NextResponse.json({ received: true });
+  }
+
+  // ── Ignore other event types ─────────────────────────────────────────────
+  if (event.type !== "payment.succeeded") {
+    return NextResponse.json({ received: true });
+  }
 
   // ── Bulk payout flow ─────────────────────────────────────────────────────
   if (metadata.is_bulk === "true") {
@@ -184,6 +199,7 @@ export async function POST(request: NextRequest) {
       .from("payouts")
       .update({ dodo_payment_id: paymentId, status: "processing" })
       .eq("id", preInsertedPayoutId)
+      .in("status", ["pending", "processing"])
       .select()
       .single();
 

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   const serviceClient = createServiceClient();
   const { data: payout, error: payoutError } = await serviceClient
     .from("payouts")
-    .insert({ contractor_id: contractorId, amount_usd: amountUsd, status: "processing" })
+    .insert({ contractor_id: contractorId, amount_usd: amountUsd, status: "pending" })
     .select()
     .single();
 
