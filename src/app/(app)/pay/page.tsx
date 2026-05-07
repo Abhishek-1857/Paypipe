@@ -358,10 +358,10 @@ export default function SendPaymentPage() {
             </div>
           )}
 
-          {/* Why Remlo */}
+          {/* Why Payzap */}
           <div className="card p-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-4" style={{ color: "var(--text-muted)" }}>
-              Why Remlo?
+              Why Payzap?
             </p>
             <div className="space-y-3">
               {[

@@ -1,13 +1,13 @@
-# FlashPay
+# Payzap ⚡
 
 **Pay global contractors via card. Settle instantly in USDC on Solana.**
 
-FlashPay replaces $28 SWIFT wires that take 5 days with $0.001 Solana transfers that take 1 second. Built for Indian SaaS founders who pay global contractors.
+Payzap replaces $28 SWIFT wires that take 5 days with $0.001 Solana transfers that take 1 second. Built for Indian SaaS founders who pay global contractors.
 
 ## How It Works
 
 ```
-Card Payment (Fiat In)     FlashPay Backend       Solana (USDC Out)
+Card Payment (Fiat In)     Payzap Backend         Solana (USDC Out)
 ┌─────────────────┐      ┌──────────────────┐    ┌──────────────────┐
 │  Dodo Payments   │─────▶│  Webhook handler  │───▶│ USDC transfer to │
 │  Checkout (USD)  │      │  Process payment  │    │ contractor wallet│
@@ -17,7 +17,7 @@ Card Payment (Fiat In)     FlashPay Backend       Solana (USDC Out)
 1. **Founder** adds contractors with their Solana wallet addresses
 2. **Founder** initiates a payout → redirected to Dodo Payments checkout (card payment)
 3. **Dodo webhook** fires on successful payment
-4. **FlashPay backend** automatically sends USDC to the contractor's Solana wallet
+4. **Payzap backend** automatically sends USDC to the contractor's Solana wallet
 5. **Contractor** receives USDC in ~1 second
 
 ## Tech Stack
@@ -27,6 +27,7 @@ Card Payment (Fiat In)     FlashPay Backend       Solana (USDC Out)
 - **Dodo Payments** — fiat payment processing (test mode)
 - **Solana** — USDC transfers via `@solana/web3.js` + `@solana/spl-token`
 - **Tailwind CSS** — responsive dark-mode UI
+- **Resend** — transactional emails
 
 ## Setup
 
@@ -34,7 +35,7 @@ Card Payment (Fiat In)     FlashPay Backend       Solana (USDC Out)
 
 ```bash
 git clone <your-repo-url>
-cd flashpay
+cd payzap
 npm install
 ```
 
@@ -60,10 +61,10 @@ npm install
 sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
 
 # Create a new keypair
-solana-keygen new --outfile ~/.config/solana/flashpay.json
+solana-keygen new --outfile ~/.config/solana/payzap.json
 
 # Get the base58 private key for .env.local
-node -e "const bs58 = require('bs58'); const key = require('fs').readFileSync(require('os').homedir() + '/.config/solana/flashpay.json'); console.log(bs58.encode(Buffer.from(JSON.parse(key))))"
+node -e "const bs58 = require('bs58'); const key = require('fs').readFileSync(require('os').homedir() + '/.config/solana/payzap.json'); console.log(bs58.encode(Buffer.from(JSON.parse(key))))"
 
 # Fund with devnet SOL (needed for tx fees)
 solana airdrop 2 --url devnet
@@ -103,8 +104,8 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with a magic link, 
 2. Click **Pay** and enter an amount
 3. Click **Pay via Card** — you'll be redirected to Dodo Payments checkout
 4. Use test card: `4111 1111 1111 1111` with any future expiry and any CVC
-5. After payment, you'll be redirected back to FlashPay
-6. The webhook fires, FlashPay sends USDC on Solana devnet
+5. After payment, you'll be redirected back to Payzap
+6. The webhook fires, Payzap sends USDC on Solana devnet
 7. Check the transaction on [Solscan (devnet)](https://solscan.io/?cluster=devnet)
 
 ## Project Structure

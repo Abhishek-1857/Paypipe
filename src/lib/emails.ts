@@ -49,7 +49,7 @@ function contractorEmailHtml(params: PayoutEmailParams): string {
 
         <!-- Header -->
         <tr><td style="padding:32px 40px 24px;text-align:center;border-bottom:1px solid #1E1E24;">
-          <div style="font-size:24px;font-weight:900;color:#00E6A0;letter-spacing:-0.5px;">Remlo</div>
+          <div style="font-size:24px;font-weight:900;color:#00E6A0;letter-spacing:-0.5px;">Payzap</div>
         </td></tr>
 
         <!-- Body -->
@@ -78,7 +78,7 @@ function contractorEmailHtml(params: PayoutEmailParams): string {
 
         <!-- Footer -->
         <tr><td style="padding:20px 40px;border-top:1px solid #1E1E24;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by Remlo · Built on Solana · Payments by Dodo Payments</p>
+          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by Payzap · Built on Solana · Payments by Dodo Payments</p>
         </td></tr>
 
       </table>
@@ -119,7 +119,7 @@ function founderEmailHtml(params: PayoutEmailParams): string {
 
         <!-- Header -->
         <tr><td style="padding:32px 40px 24px;text-align:center;border-bottom:1px solid #1E1E24;">
-          <div style="font-size:24px;font-weight:900;color:#00E6A0;letter-spacing:-0.5px;">Remlo</div>
+          <div style="font-size:24px;font-weight:900;color:#00E6A0;letter-spacing:-0.5px;">Payzap</div>
         </td></tr>
 
         <!-- Body -->
@@ -144,7 +144,7 @@ function founderEmailHtml(params: PayoutEmailParams): string {
 
         <!-- Footer -->
         <tr><td style="padding:20px 40px;border-top:1px solid #1E1E24;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by Remlo · Built on Solana · Payments by Dodo Payments</p>
+          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by Payzap · Built on Solana · Payments by Dodo Payments</p>
         </td></tr>
 
       </table>
@@ -196,7 +196,7 @@ function bulkSummaryEmailHtml(params: BulkPayoutSummaryParams): string {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#111113;border-radius:12px;border:1px solid #1E1E24;overflow:hidden;">
 
         <tr><td style="padding:32px 40px 24px;text-align:center;border-bottom:1px solid #1E1E24;">
-          <div style="font-size:24px;font-weight:900;color:#00E6A0;letter-spacing:-0.5px;">Remlo</div>
+          <div style="font-size:24px;font-weight:900;color:#00E6A0;letter-spacing:-0.5px;">Payzap</div>
         </td></tr>
 
         <tr><td style="padding:40px 40px 32px;">
@@ -231,7 +231,7 @@ function bulkSummaryEmailHtml(params: BulkPayoutSummaryParams): string {
         </td></tr>
 
         <tr><td style="padding:20px 40px;border-top:1px solid #1E1E24;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by Remlo · Built on Solana · Payments by Dodo Payments</p>
+          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by Payzap · Built on Solana · Payments by Dodo Payments</p>
         </td></tr>
 
       </table>
@@ -279,20 +279,20 @@ function contractorOnboardedEmailHtml(params: ContractorOnboardedParams): string
 
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${contractorName} joined Remlo</title></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${contractorName} joined Payzap</title></head>
 <body style="margin:0;padding:0;background:#0A0A0B;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0B;padding:40px 16px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#111113;border-radius:12px;border:1px solid #1E1E24;overflow:hidden;">
 
         <tr><td style="padding:32px 40px 24px;text-align:center;border-bottom:1px solid #1E1E24;">
-          <div style="font-size:24px;font-weight:900;color:#00E6A0;letter-spacing:-0.5px;">Remlo</div>
+          <div style="font-size:24px;font-weight:900;color:#00E6A0;letter-spacing:-0.5px;">Payzap</div>
         </td></tr>
 
         <tr><td style="padding:40px 40px 32px;">
           <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#F2F2F3;text-align:center;">New Contractor Onboarded</h1>
           <p style="margin:0 0 32px;font-size:14px;color:#8A8A96;text-align:center;">
-            <span style="color:#00E6A0;font-weight:700;">${contractorName}</span> has joined Remlo and is ready to be paid.
+            <span style="color:#00E6A0;font-weight:700;">${contractorName}</span> has joined Payzap and is ready to be paid.
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:8px;overflow:hidden;border:1px solid #1E1E24;margin-bottom:32px;">
@@ -310,7 +310,7 @@ function contractorOnboardedEmailHtml(params: ContractorOnboardedParams): string
         </td></tr>
 
         <tr><td style="padding:20px 40px;border-top:1px solid #1E1E24;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by Remlo · Built on Solana · Payments by Dodo Payments</p>
+          <p style="margin:0;font-size:11px;color:#3A3A50;">Powered by Payzap · Built on Solana · Payments by Dodo Payments</p>
         </td></tr>
 
       </table>
@@ -325,7 +325,7 @@ export async function sendContractorOnboardedEmail(params: ContractorOnboardedPa
     await resend.emails.send({
       from: FROM,
       to: params.founderEmail,
-      subject: `${params.contractorName} has joined Remlo and is ready to be paid`,
+      subject: `${params.contractorName} has joined Payzap and is ready to be paid`,
       html: contractorOnboardedEmailHtml(params),
     });
   } catch (err) {

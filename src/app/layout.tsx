@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Remlo — Pay contractors worldwide in seconds",
+  title: "Payzap — Pay contractors worldwide in seconds",
   description:
     "Global contractor payouts. Powered by Solana.",
   icons: { icon: "/favicon.svg" },

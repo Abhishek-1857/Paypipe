@@ -1,4 +1,4 @@
-export function RemloLogo({ size = 36, className = "", animate = false }: { size?: number; className?: string; animate?: boolean }) {
+export function PayzapLogo({ size = 36, className = "", animate = false }: { size?: number; className?: string; animate?: boolean }) {
   return (
     <svg
       width={size}
@@ -20,10 +20,10 @@ export function RemloLogo({ size = 36, className = "", animate = false }: { size
   );
 }
 
-export function RemloWordmark({ className = "" }: { className?: string }) {
+export function PayzapWordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`font-heading font-bold tracking-tight ${className}`}>
-      <span style={{ color: '#E8ECF4', fontWeight: 700 }}>Rem</span><span style={{ color: '#00E6A0', fontWeight: 700 }}>lo</span>
+      <span style={{ color: '#E8ECF4', fontWeight: 700 }}>Pay</span><span style={{ color: '#00E6A0', fontWeight: 700 }}>zap</span>
     </span>
   );
 }

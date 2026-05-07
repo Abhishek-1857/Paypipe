@@ -363,7 +363,7 @@ export default function PayPage({
                 </ul>
               </div>
               <div>
-                <p className="text-xs font-semibold mb-2" style={{ color: "var(--green)" }}>Remlo ⚡</p>
+                <p className="text-xs font-semibold mb-2" style={{ color: "var(--green)" }}>Payzap ⚡</p>
                 <ul className="space-y-1.5">
                   {["~$0.001 fee", "<2 seconds", "Guaranteed on Solana"].map((item) => (
                     <li key={item} className="flex items-center gap-1.5 text-xs" style={{ color: "var(--green)" }}>
@@ -399,7 +399,7 @@ export default function PayPage({
             <div className="space-y-0">
               {[
                 "You pay by card via Dodo",
-                "Remlo converts to USDC",
+                "Payzap converts to USDC",
                 "Lands in wallet in <2s",
               ].map((step, i, arr) => (
                 <div key={i} className="flex gap-3 items-start">

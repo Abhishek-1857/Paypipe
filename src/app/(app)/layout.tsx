@@ -49,7 +49,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const title =
     Object.entries(pageTitles).find(([path]) =>
       pathname.startsWith(path)
-    )?.[1] || "Remlo";
+    )?.[1] || "Payzap";
 
   const initials = userEmail?.[0]?.toUpperCase() ?? "?";
 

@@ -47,7 +47,7 @@ export default function PayoutsPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `remlo-payouts-${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `payzap-payouts-${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

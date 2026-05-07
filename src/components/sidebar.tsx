@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { RemloLogo, RemloWordmark } from "@/components/logo";
+import { PayzapLogo, PayzapWordmark } from "@/components/logo";
 
 const navItems = [
   {
@@ -81,8 +81,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center h-14 flex-shrink-0 px-3" style={{ borderBottom: "1px solid rgba(0,230,160,0.15)" }}>
         <Link href="/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
-          <RemloLogo size={28} />
-          {!collapsed && <RemloWordmark className="text-[15px] whitespace-nowrap" />}
+          <PayzapLogo size={28} />
+          {!collapsed && <PayzapWordmark className="text-[15px] whitespace-nowrap" />}
         </Link>
         <button
           onClick={onToggle}

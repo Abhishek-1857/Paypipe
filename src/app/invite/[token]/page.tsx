@@ -14,7 +14,7 @@ function Logo() {
   return (
     <div style={{ textAlign: "center", marginBottom: "32px" }}>
       <span style={{ fontSize: "22px", fontWeight: 900, color: "#00E6A0", letterSpacing: "-0.5px", fontFamily: "sans-serif" }}>
-        Remlo
+        Payzap
       </span>
     </div>
   );
@@ -175,7 +175,7 @@ export default function InvitePage() {
                   : "You've been invited to join a contractor network"}
               </h1>
               <p style={{ margin: "0 0 28px", fontSize: 13, color: "#8A8A96", lineHeight: 1.6 }}>
-                Fill in your details to receive payments via Remlo.
+                Fill in your details to receive payments via Payzap.
               </p>
 
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -266,7 +266,7 @@ export default function InvitePage() {
         </div>
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#3A4A66" }}>
-          Powered by Remlo · Your payment details are stored securely
+          Powered by Payzap · Your payment details are stored securely
         </p>
       </div>
     </div>
