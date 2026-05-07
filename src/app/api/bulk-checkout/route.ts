@@ -65,6 +65,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
+  // Pre-insert processing payout rows so they appear immediately in the UI
+  const payoutInserts = items.map((i) => ({
+    contractor_id: i.contractorId,
+    amount_usd: i.amountUsd,
+    status: "processing",
+    bulk_payout_id: bulkPayout.id,
+  }));
+  await serviceClient.from("payouts").insert(payoutInserts);
+
   try {
     const session = await createBulkCheckoutSession(
       bulkPayout.id,

@@ -9,7 +9,8 @@ export async function createCheckoutSession(
   contractorId: string,
   amountUsd: number,
   ownerEmail: string,
-  ownerId: string
+  ownerId: string,
+  payoutId: string
 ) {
   const amountInCents = Math.round(amountUsd * 100);
 
@@ -25,6 +26,7 @@ export async function createCheckoutSession(
       contractor_id: contractorId,
       amount_usd: String(amountUsd),
       owner_id: ownerId,
+      payout_id: payoutId,
     },
     customer: {
       email: ownerEmail,

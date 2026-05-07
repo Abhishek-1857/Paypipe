@@ -86,14 +86,25 @@ export async function POST(request: NextRequest) {
 
         await supabase.from("bulk_payout_items").update({ status: "done", solana_tx_sig: txSig }).eq("id", item.id);
 
-        await supabase.from("payouts").insert({
-          contractor_id: item.contractor_id,
-          amount_usd: item.amount_usd,
-          dodo_payment_id: `${paymentId}_${item.id}`,
-          bulk_payout_id: bulkPayoutId,
-          status: "done",
-          solana_tx_sig: txSig,
-        });
+        // Update pre-inserted processing row; fall back to insert if missing
+        const { count } = await supabase
+          .from("payouts")
+          .update({ status: "done", solana_tx_sig: txSig, dodo_payment_id: `${paymentId}_${item.id}` })
+          .eq("bulk_payout_id", bulkPayoutId)
+          .eq("contractor_id", item.contractor_id)
+          .eq("status", "processing")
+          .select("id", { count: "exact", head: true });
+
+        if (!count || count === 0) {
+          await supabase.from("payouts").insert({
+            contractor_id: item.contractor_id,
+            amount_usd: item.amount_usd,
+            dodo_payment_id: `${paymentId}_${item.id}`,
+            bulk_payout_id: bulkPayoutId,
+            status: "done",
+            solana_tx_sig: txSig,
+          });
+        }
 
         txResults.push({ name: contractor.name, amountUsd: Number(item.amount_usd), txSig });
 
@@ -142,14 +153,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  // ── Single payout flow (unchanged) ───────────────────────────────────────
+  // ── Single payout flow ───────────────────────────────────────────────────
   const contractorId = metadata.contractor_id;
   const amountUsd = parseFloat(metadata.amount_usd);
+  const preInsertedPayoutId = metadata.payout_id;
 
   if (!contractorId || !amountUsd || !paymentId) {
     return NextResponse.json({ error: "Missing metadata" }, { status: 400 });
   }
 
+  // Idempotency: skip if already processed
   const { data: existing } = await supabase
     .from("payouts")
     .select("id")
@@ -160,21 +173,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, duplicate: true });
   }
 
-  const { data: payout, error: insertError } = await supabase
-    .from("payouts")
-    .insert({
-      contractor_id: contractorId,
-      amount_usd: amountUsd,
-      dodo_payment_id: paymentId,
-      status: "processing",
-    })
-    .select()
-    .single();
+  // Try to update the pre-inserted processing row; fall back to insert for older sessions
+  let payoutId: string;
+  if (preInsertedPayoutId) {
+    const { data: updated, error: updateError } = await supabase
+      .from("payouts")
+      .update({ dodo_payment_id: paymentId, status: "processing" })
+      .eq("id", preInsertedPayoutId)
+      .select()
+      .single();
 
-  if (insertError) {
-    console.error("Failed to insert payout:", insertError);
-    return NextResponse.json({ error: "DB error" }, { status: 500 });
+    if (updateError || !updated) {
+      console.error("Failed to update pre-inserted payout:", updateError);
+      return NextResponse.json({ error: "DB error" }, { status: 500 });
+    }
+    payoutId = updated.id;
+  } else {
+    const { data: inserted, error: insertError } = await supabase
+      .from("payouts")
+      .insert({ contractor_id: contractorId, amount_usd: amountUsd, dodo_payment_id: paymentId, status: "processing" })
+      .select()
+      .single();
+
+    if (insertError || !inserted) {
+      console.error("Failed to insert payout:", insertError);
+      return NextResponse.json({ error: "DB error" }, { status: 500 });
+    }
+    payoutId = inserted.id;
   }
+
+  const payout = { id: payoutId };
 
   const { data: contractor } = await supabase
     .from("contractors")
