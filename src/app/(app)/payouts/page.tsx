@@ -309,10 +309,10 @@ export default function PayoutsPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1 text-xs rounded-md font-medium transition-colors disabled:opacity-30"
-                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                className="px-3 py-1.5 text-xs rounded-md font-semibold transition-all disabled:opacity-30"
+                style={{ color: "var(--green)", border: "1px solid rgba(0,230,160,0.3)", background: "rgba(0,230,160,0.06)" }}
               >
-                Previous
+                ← Previous
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
@@ -342,10 +342,10 @@ export default function PayoutsPage() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1 text-xs rounded-md font-medium transition-colors disabled:opacity-30"
-                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                className="px-3 py-1.5 text-xs rounded-md font-semibold transition-all disabled:opacity-30"
+                style={{ color: "var(--green)", border: "1px solid rgba(0,230,160,0.3)", background: "rgba(0,230,160,0.06)" }}
               >
-                Next
+                Next →
               </button>
             </div>
           </div>
