@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const protectedPaths = ["/dashboard", "/contractors", "/pay", "/bulk-payout", "/payouts"];
+  const protectedPaths = ["/dashboard", "/contractors", "/pay", "/bulk-payout", "/payouts", "/treasury"];
   const isProtected = protectedPaths.some((p) =>
     request.nextUrl.pathname.startsWith(p)
   );
@@ -37,12 +37,15 @@ export async function middleware(request: NextRequest) {
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 
   if (request.nextUrl.pathname === "/login" && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    const next = request.nextUrl.searchParams.get("next");
+    url.pathname = next && next.startsWith("/") ? next : "/dashboard";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
@@ -50,5 +53,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/contractors/:path*", "/pay/:path*", "/bulk-payout/:path*", "/bulk-payout", "/payouts/:path*", "/payouts", "/login"],
+  matcher: ["/dashboard/:path*", "/contractors/:path*", "/pay/:path*", "/bulk-payout/:path*", "/bulk-payout", "/payouts/:path*", "/payouts", "/treasury/:path*", "/treasury", "/login"],
 };

@@ -23,7 +23,7 @@ export function PayzapLogo({ size = 36, className = "", animate = false }: { siz
 export function PayzapWordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`font-heading font-bold tracking-tight ${className}`}>
-      <span style={{ color: '#E8ECF4', fontWeight: 700 }}>Pay</span><span style={{ color: '#00E6A0', fontWeight: 700 }}>zap</span>
+      <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>Pay</span><span style={{ color: 'var(--green)', fontWeight: 700 }}>zap</span>
     </span>
   );
 }

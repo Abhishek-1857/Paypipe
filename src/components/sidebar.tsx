@@ -51,6 +51,17 @@ const navItems = [
     ),
   },
   {
+    href: "/treasury",
+    label: "Treasury",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+        <path d="M16 3H8a2 2 0 0 0-2 2v2" />
+        <circle cx="18" cy="14" r="1.5" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
     href: "/pay",
     label: "Send Payment",
     matchPath: "/pay",
@@ -74,12 +85,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className="fixed left-0 top-0 bottom-0 bg-[var(--bg-surface)] flex flex-col z-40 transition-[width] duration-300 overflow-hidden"
-      style={{ width: collapsed ? "64px" : "200px", borderRight: "1px solid rgba(0,230,160,0.15)" }}
+      style={{ width: collapsed ? "64px" : "200px", borderRight: "1px solid var(--sidebar-border)" }}
     >
       {/* Gradient top accent line */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] z-10" style={{ background: 'linear-gradient(90deg, #00E6A0 0%, rgba(0,230,160,0.3) 60%, transparent 100%)' }} />
+      <div className="absolute top-0 left-0 right-0 h-[2px] z-10" style={{ background: 'var(--sidebar-accent)' }} />
       {/* Logo */}
-      <div className="flex items-center h-14 flex-shrink-0 px-3" style={{ borderBottom: "1px solid rgba(0,230,160,0.15)" }}>
+      <div className="flex items-center h-14 flex-shrink-0 px-3" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
         <Link href="/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
           <PayzapLogo size={28} />
           {!collapsed && <PayzapWordmark className="text-[15px] whitespace-nowrap" />}
@@ -121,7 +132,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               }`}
             >
               {isActive && !collapsed && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r bg-[var(--green)]" style={{ boxShadow: '2px 0 8px rgba(0,230,160,0.5)' }} />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r bg-[var(--green)]" style={{ boxShadow: '2px 0 8px var(--green-dim)' }} />
               )}
               {item.icon}
               {!collapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
@@ -131,16 +142,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* Status footer */}
-      <div className="px-3 py-2.5" style={{ borderTop: "1px solid rgba(0,230,160,0.15)" }}>
+      <div className="px-3 py-2.5" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
         {collapsed ? (
           <div className="flex justify-center" title="Solana: Operational">
-            <span className="w-2 h-2 rounded-full animate-pulse-slow" style={{ background: "#00E6A0" }} />
+            <span className="w-2 h-2 rounded-full animate-pulse-slow" style={{ background: "var(--green)" }} />
           </div>
         ) : (
           <>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse-slow" style={{ background: "#00E6A0" }} />
-              <span className="text-[10px] font-medium" style={{ color: "#00E6A0" }}>Solana: Operational</span>
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse-slow" style={{ background: "var(--green)" }} />
+              <span className="text-[10px] font-medium" style={{ color: "var(--green-text)" }}>Solana: Operational</span>
             </div>
             <p className="text-[9px] text-[var(--text-muted)] leading-tight">Powered by Dodo Payments</p>
           </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { StatusBadge } from "@/components/status-badge";
 import { formatDate } from "@/lib/utils";
 
@@ -111,7 +111,7 @@ export default function PayoutsPage() {
               className="px-3 py-1 text-xs rounded-md font-medium transition-all"
               style={
                 filter === opt.value
-                  ? { background: 'var(--green)', color: '#080C14' }
+                  ? { background: 'var(--green)', color: 'var(--on-green)' }
                   : { color: 'var(--text-muted)', background: 'transparent' }
               }
             >
@@ -129,10 +129,7 @@ export default function PayoutsPage() {
           <button
             onClick={handleExportCSV}
             disabled={exporting}
-            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-            style={{ border: "1px solid var(--border-bright)", color: "var(--text-muted)", background: "transparent" }}
-            onMouseEnter={(e) => { if (!exporting) { (e.currentTarget as HTMLElement).style.color = "var(--green)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--green)"; } }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--border-bright)"; }}
+            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 btn-export"
           >
             {exporting ? (
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
@@ -159,14 +156,14 @@ export default function PayoutsPage() {
             <p className="text-sm text-[var(--text-muted)]">{search || filter !== "all" ? "No payouts match your filters." : "No payouts yet."}</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
             <thead>
               <tr className="table-header border-b border-[var(--border)]">
-                <th className="px-5 py-3 text-left font-medium">Contractor</th>
-                <th className="px-5 py-3 text-left font-medium">Amount</th>
-                <th className="px-5 py-3 text-left font-medium w-[120px]">Status</th>
-                <th className="px-5 py-3 text-left font-medium hidden md:table-cell">Date</th>
-                <th className="px-5 py-3 text-right font-medium w-10"></th>
+                <th className="px-5 py-3 text-left font-medium w-[35%]">Contractor</th>
+                <th className="px-5 py-3 text-left font-medium w-[15%]">Amount</th>
+                <th className="px-5 py-3 text-left font-medium w-[20%]">Status</th>
+                <th className="px-5 py-3 text-left font-medium w-[22%] hidden md:table-cell">Date</th>
+                <th className="px-5 py-3 text-right font-medium w-[8%]"></th>
               </tr>
             </thead>
             <tbody>
@@ -176,11 +173,10 @@ export default function PayoutsPage() {
                 const isExpanded = expandedId === p.id;
                 const solscanUrl = p.solana_tx_sig ? `https://solscan.io/tx/${p.solana_tx_sig}?cluster=devnet` : null;
                 return (
-                  <>
+                  <Fragment key={p.id}>
                     <tr
-                      key={p.id}
                       className="table-row cursor-pointer"
-                      style={isExpanded ? { background: 'rgba(0,230,160,0.03)', borderLeft: '2px solid #00E6A0' } : {}}
+                      style={isExpanded ? { background: 'var(--green-dim)', borderLeft: '2px solid var(--green)' } : {}}
                       onClick={() => setExpandedId(isExpanded ? null : p.id)}
                     >
                       <td className="px-5 py-3.5">
@@ -224,8 +220,8 @@ export default function PayoutsPage() {
 
                     {/* Expanded row */}
                     {isExpanded && (
-                      <tr key={`${p.id}-expanded`} className="payout-expanded-row">
-                        <td colSpan={5} className="px-5 pb-4 pt-1" style={{ background: 'rgba(0,230,160,0.03)', borderLeft: '2px solid #00E6A0' }}>
+                      <tr className="payout-expanded-row">
+                        <td colSpan={5} className="px-5 pb-4 pt-1" style={{ background: 'var(--green-dim)', borderLeft: '2px solid var(--green)' }}>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-3">
                             {/* TX Hash */}
                             <div>
@@ -278,10 +274,7 @@ export default function PayoutsPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 text-xs rounded-lg font-medium transition-colors"
-                              style={{ background: 'rgba(0,230,160,0.1)', color: 'var(--green)', border: '1px solid rgba(0,230,160,0.2)' }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,230,160,0.18)')}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0,230,160,0.1)')}
+                              className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 text-xs rounded-lg font-medium transition-colors btn-solscan"
                             >
                               View on Solscan
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -292,7 +285,7 @@ export default function PayoutsPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>
@@ -310,7 +303,7 @@ export default function PayoutsPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="px-3 py-1.5 text-xs rounded-md font-semibold transition-all disabled:opacity-30"
-                style={{ color: "var(--green)", border: "1px solid rgba(0,230,160,0.3)", background: "rgba(0,230,160,0.06)" }}
+                style={{ color: "var(--green)", border: "1px solid var(--green-border)", background: "var(--green-dim)" }}
               >
                 ← Previous
               </button>
@@ -331,7 +324,7 @@ export default function PayoutsPage() {
                       className="w-8 h-8 text-xs rounded-md font-medium transition-all"
                       style={
                         p === currentPage
-                          ? { background: "var(--green)", color: "#080C14" }
+                          ? { background: "var(--green)", color: "var(--on-green)" }
                           : { color: "var(--text-muted)", border: "1px solid var(--border)" }
                       }
                     >
@@ -343,7 +336,7 @@ export default function PayoutsPage() {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="px-3 py-1.5 text-xs rounded-md font-semibold transition-all disabled:opacity-30"
-                style={{ color: "var(--green)", border: "1px solid rgba(0,230,160,0.3)", background: "rgba(0,230,160,0.06)" }}
+                style={{ color: "var(--green)", border: "1px solid var(--green-border)", background: "var(--green-dim)" }}
               >
                 Next →
               </button>

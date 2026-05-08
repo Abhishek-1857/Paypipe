@@ -60,7 +60,9 @@ export default function LoginPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN") {
         setUser(session?.user ?? null);
-        window.location.href = "/dashboard";
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next");
+        window.location.href = next && next.startsWith("/") ? next : "/dashboard";
       }
       if (event === "SIGNED_OUT") setUser(null);
     });
@@ -72,9 +74,13 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     const supabase = createClient();
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next");
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (next && next.startsWith("/")) callbackUrl.searchParams.set("next", next);
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { emailRedirectTo: callbackUrl.toString() },
     });
     setLoading(false);
     if (error) setError(error.message);

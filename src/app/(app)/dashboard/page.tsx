@@ -281,7 +281,7 @@ function DashboardContent() {
               </svg>
             </div>
           </div>
-          <p className="text-[28px] font-mono-data font-semibold text-[var(--green)] leading-none glow-green">
+          <p className="text-[28px] font-mono-data font-semibold text-[var(--green-text)] leading-none glow-green">
             <CountUp end={totalPaid} prefix="$" decimals={2} duration={800} />
           </p>
           <div className="flex items-center justify-between mt-3">
@@ -295,7 +295,7 @@ function DashboardContent() {
               </span>
             )}
           </div>
-          <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, #00E6A0, transparent)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, var(--green), transparent)' }} />
         </div>
 
         {/* Active Contractors */}
@@ -351,7 +351,7 @@ function DashboardContent() {
 
         {/* ── BOTTOM ROW ── */}
 
-        {/* Hot Wallet — spans 2 columns */}
+        {/* Treasury — spans 2 columns */}
         {(() => {
           const balanceValue = walletBalance?.balance ?? null;
           const hasError = !!walletBalance?.error;
@@ -372,7 +372,7 @@ function DashboardContent() {
                         <circle cx="18" cy="14" r="1.5" fill="var(--green)" />
                       </svg>
                     </div>
-                    <span className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium">Hot Wallet</span>
+                    <span className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium">Treasury</span>
                   </div>
 
                   <p
@@ -431,20 +431,16 @@ function DashboardContent() {
                       <p className="font-mono-data text-[11px] text-[var(--text-muted)] truncate">
                         {walletBalance.walletAddress}
                       </p>
-                      <a
-                        href={`https://solscan.io/address/${walletBalance.fullAddress}?cluster=${walletBalance.cluster}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Link
+                        href="/treasury"
                         className="flex items-center gap-1 text-[11px] font-medium transition-colors w-fit"
                         style={{ color: "var(--green)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-                        onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                       >
+                        View details
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                          <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
                         </svg>
-                        View on Solscan
-                      </a>
+                      </Link>
                     </div>
                   ) : (
                     <p className="font-mono-data text-[11px] text-[var(--text-muted)]">—</p>
@@ -456,8 +452,8 @@ function DashboardContent() {
                 className="absolute bottom-0 left-0 right-0 h-[2px]"
                 style={{
                   background: !hasError && isLow
-                    ? "linear-gradient(90deg, #F59E0B, transparent)"
-                    : "linear-gradient(90deg, rgba(0,230,160,0.3), transparent)",
+                    ? "linear-gradient(90deg, var(--amber), transparent)"
+                    : "linear-gradient(90deg, var(--green), transparent)",
                 }}
               />
             </div>
@@ -508,7 +504,7 @@ function DashboardContent() {
               </div>
             )}
           </div>
-          <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, #00E6A0, transparent)" }} />
+          <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, var(--green), transparent)" }} />
         </div>
       </div>
       </ScrollReveal>
@@ -529,25 +525,25 @@ function DashboardContent() {
                   <stop offset="100%" stopColor="#00E6A0" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#0E1420" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: "#3A4A66", fontFamily: "JetBrains Mono, monospace" }}
+                tick={{ fontSize: 11, fill: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}
                 tickLine={false}
                 axisLine={false}
                 interval={6}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: "#3A4A66", fontFamily: "JetBrains Mono, monospace" }}
+                tick={{ fontSize: 11, fill: "var(--text-muted)", fontFamily: "JetBrains Mono, monospace" }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(v) => `$${v}`}
               />
               <Tooltip
-                contentStyle={{ background: "var(--bg-elevated)", border: "1px solid rgba(0,230,160,0.2)", borderRadius: "8px", fontSize: "12px", color: "var(--text-primary)", fontFamily: "JetBrains Mono, monospace" }}
-                cursor={{ stroke: "#00E6A0", strokeWidth: 1, strokeDasharray: "4 2" }}
+                contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "8px", fontSize: "12px", color: "var(--text-primary)", fontFamily: "JetBrains Mono, monospace" }}
+                cursor={{ stroke: "var(--green)", strokeWidth: 1, strokeDasharray: "4 2" }}
                 formatter={(v) => [`$${Number(v).toFixed(2)}`, "Paid out"]}
-                labelStyle={{ color: "#4A5A74", marginBottom: 4 }}
+                labelStyle={{ color: "var(--text-muted)", marginBottom: 4 }}
               />
               <Area type="monotone" dataKey="amount" stroke="#00E6A0" strokeWidth={2} fill="url(#greenGrad)" dot={false} activeDot={{ r: 4, fill: "#00E6A0", strokeWidth: 0 }} animationDuration={1200} animationBegin={400} />
             </AreaChart>
@@ -571,7 +567,7 @@ function DashboardContent() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ background: "var(--bg-elevated)", border: "1px solid rgba(0,230,160,0.2)", borderRadius: "8px", fontSize: "12px", color: "var(--text-primary)" }}
+                    contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "8px", fontSize: "12px", color: "var(--text-primary)" }}
                     formatter={(v, name) => [v, String(name).charAt(0).toUpperCase() + String(name).slice(1)]}
                   />
                   <Legend iconType="circle" iconSize={8} formatter={(v) => <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{v.charAt(0).toUpperCase() + v.slice(1)}</span>} />
@@ -580,7 +576,7 @@ function DashboardContent() {
               {/* Center label */}
               <div className="absolute pointer-events-none" style={{ top: 0, left: 0, right: 0, height: 162, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div className="text-center">
-                  <div className="font-mono-data font-bold text-[18px] glow-green" style={{ color: '#00E6A0', lineHeight: 1 }}>{donePct}%</div>
+                  <div className="font-mono-data font-bold text-[18px] glow-green" style={{ color: 'var(--green-text)', lineHeight: 1 }}>{donePct}%</div>
                   <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Done</div>
                 </div>
               </div>
@@ -645,15 +641,15 @@ function DashboardContent() {
             </div>
           ) : (
             <div className="overflow-x-auto flex-1">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
                 <thead>
                   <tr className="table-header border-b border-[var(--border)]">
-                    <th className="px-5 py-3 text-left font-medium">Contractor</th>
-                    <th className="px-5 py-3 text-left font-medium">Amount</th>
-                    <th className="px-5 py-3 text-left font-medium w-[120px]">Status</th>
-                    <th className="px-5 py-3 text-left font-medium">Tx Hash</th>
-                    <th className="px-5 py-3 text-left font-medium">Time</th>
-                    <th className="px-5 py-3 text-left font-medium"></th>
+                    <th className="px-5 py-3 text-left font-medium" style={{ width: '22%' }}>Contractor</th>
+                    <th className="px-5 py-3 text-left font-medium" style={{ width: '14%' }}>Amount</th>
+                    <th className="px-5 py-3 text-left font-medium" style={{ width: '18%' }}>Status</th>
+                    <th className="px-5 py-3 text-left font-medium" style={{ width: '22%' }}>Tx Hash</th>
+                    <th className="px-5 py-3 text-left font-medium" style={{ width: '16%' }}>Time</th>
+                    <th className="px-5 py-3 text-left font-medium" style={{ width: '8%' }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -668,7 +664,7 @@ function DashboardContent() {
                               className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
                               style={{ background: "linear-gradient(135deg, var(--green-light), var(--green))" }}
                             >
-                              <span className="text-[10px] font-bold" style={{ color: "var(--bg-base)" }}>{initials}</span>
+                              <span className="text-[10px] font-bold" style={{ color: "var(--on-green)" }}>{initials}</span>
                             </div>
                             <span className="font-medium text-[var(--text-primary)]">{name || "—"}</span>
                           </div>
@@ -695,9 +691,9 @@ function DashboardContent() {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="group/tx flex items-center gap-1"
-                              style={{ color: '#3A4A66' }}
-                              onMouseEnter={(e) => (e.currentTarget.style.color = '#00E6A0')}
-                              onMouseLeave={(e) => (e.currentTarget.style.color = '#3A4A66')}
+                              style={{ color: 'var(--text-muted)' }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--green)')}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
                             >
                               <TxHash hash={p.solana_tx_sig} />
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-0 group-hover/tx:opacity-100 transition-opacity flex-shrink-0">

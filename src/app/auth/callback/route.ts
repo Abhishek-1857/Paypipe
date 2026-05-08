@@ -6,9 +6,11 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const token_hash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
+  const next = requestUrl.searchParams.get("next");
+  const destination = next && next.startsWith("/") ? next : "/dashboard";
 
   const supabaseResponse = NextResponse.redirect(
-    new URL("/dashboard", request.url)
+    new URL(destination, request.url)
   );
 
   const supabase = createServerClient(

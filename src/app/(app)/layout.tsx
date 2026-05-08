@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { TestBadge } from "@/components/test-banner";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ToastProvider } from "@/components/toast";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -60,11 +61,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         className="min-h-screen relative z-[1] transition-[margin] duration-300"
         style={{ marginLeft: collapsed ? "64px" : "200px" }}
       >
-        <header className="h-14 flex items-center justify-between px-8 backdrop-blur-sm sticky top-0 z-10" style={{ borderBottom: "1px solid rgba(0,230,160,0.15)", background: "rgba(8,12,20,0.85)" }}>
+        <header className="h-14 flex items-center justify-between px-8 backdrop-blur-sm sticky top-0 z-10" style={{ borderBottom: "1px solid var(--header-border)", background: "var(--header-bg)" }}>
           <h1 className="font-heading font-semibold text-xl text-[var(--text-primary)]">
             {title}
           </h1>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <TestBadge />
 
             {/* User dropdown */}
@@ -74,14 +76,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   onClick={() => setDropdownOpen((o) => !o)}
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-full text-sm font-medium transition-all"
                   style={{
-                    background: dropdownOpen ? 'rgba(0,230,160,0.12)' : 'rgba(0,230,160,0.07)',
-                    border: '1px solid rgba(0,230,160,0.25)',
+                    background: dropdownOpen ? 'var(--green-dim)' : 'transparent',
+                    border: '1px solid var(--border)',
                     color: 'var(--green)',
                   }}
                 >
                   <span
                     className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                    style={{ background: 'var(--green)', color: '#080C14' }}
+                    style={{ background: 'var(--green)', color: 'var(--on-green)' }}
                   >
                     {initials}
                   </span>
@@ -102,26 +104,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <div
                     className="absolute right-0 top-full mt-2 w-64 rounded-2xl overflow-hidden z-50 animate-fade-in"
                     style={{
-                      background: 'rgba(8,12,20,0.97)',
-                      border: '1px solid rgba(0,230,160,0.2)',
+                      background: 'var(--dropdown-bg)',
+                      border: '1px solid var(--border)',
                       backdropFilter: 'blur(24px)',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(0,230,160,0.05)',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
                     }}
                   >
                     {/* User header */}
-                    <div className="px-4 pt-4 pb-3 border-b border-[rgba(255,255,255,0.06)]">
+                    <div className="px-4 pt-4 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                          style={{ background: 'linear-gradient(135deg, var(--green-light), var(--green))', color: '#080C14' }}
+                          style={{ background: 'linear-gradient(135deg, var(--green-light), var(--green))', color: 'var(--on-green)' }}
                         >
                           {initials}
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-[var(--text-primary)] truncate">{userEmail}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="w-1.5 h-1.5 rounded-full animate-pulse-slow" style={{ background: '#00E6A0' }} />
-                            <span className="text-[10px] font-mono-data" style={{ color: '#00E6A0' }}>Active · Devnet</span>
+                            <span className="w-1.5 h-1.5 rounded-full animate-pulse-slow" style={{ background: 'var(--green)' }} />
+                            <span className="text-[10px] font-mono-data" style={{ color: 'var(--green-text)' }}>Active · Devnet</span>
                           </div>
                         </div>
                       </div>
@@ -129,7 +131,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                     {/* Actions */}
                     <div className="p-2">
-                      <div className="h-px mx-2 mb-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                      <div className="h-px mx-2 mb-2" style={{ background: 'var(--border)' }} />
                       <button
                         onClick={handleSignOut}
                         className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm transition-colors"

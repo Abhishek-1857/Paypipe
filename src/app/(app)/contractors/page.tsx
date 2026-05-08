@@ -370,8 +370,8 @@ export default function ContractorsPage() {
                     onMouseEnter={(e) => {
                       const el = e.currentTarget as HTMLElement;
                       el.style.background = "var(--green)";
-                      el.style.color = "var(--bg-base)";
-                      el.style.boxShadow = "0 4px 16px rgba(0,230,160,0.3)";
+                      el.style.color = "var(--on-green)";
+                      el.style.boxShadow = "0 4px 16px var(--green-dim)";
                     }}
                     onMouseLeave={(e) => {
                       const el = e.currentTarget as HTMLElement;
@@ -395,7 +395,7 @@ export default function ContractorsPage() {
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLElement;
               el.style.borderColor = "var(--green)";
-              el.style.background = "rgba(0,230,160,0.03)";
+              el.style.background = "var(--green-dim)";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLElement;
