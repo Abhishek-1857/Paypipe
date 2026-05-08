@@ -26,6 +26,12 @@ interface Policy {
   notifyOnLow: boolean;
 }
 
+interface Multisig {
+  enabled: boolean;
+  threshold: number;
+  signers: number;
+}
+
 interface TreasuryInfo {
   balance: number;
   available: number;
@@ -44,6 +50,9 @@ interface TreasuryInfo {
   recentPayouts: RecentPayout[];
   outflowChart: OutflowPoint[];
   policy: Policy;
+  multisig: Multisig;
+  todaySpent: number;
+  avgConfirmMs: number;
   syncedAt: string;
 }
 
@@ -203,13 +212,15 @@ export default function TreasuryPage() {
       >
         <span className="text-xl flex-shrink-0">{tier.icon}</span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold" style={{ color: tier.color }}>
-            {tier.label}{" "}
-            <span className="text-[var(--text-muted)] font-normal text-xs ml-1">
-              · ALL SYSTEMS
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold" style={{ color: tier.color }}>
+              {tier.label}
+            </p>
+            <span className="text-[10px] tracking-[0.08em] uppercase font-medium px-1.5 py-0.5 rounded" style={{ color: "var(--text-muted)", background: "var(--bg-elevated)" }}>
+              ALL SYSTEMS
             </span>
-          </p>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">{tier.message}</p>
+          </div>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">{tier.message}</p>
         </div>
         <div className="text-right flex-shrink-0 hidden md:block">
           <p className="text-[10px] text-[var(--text-muted)]">
@@ -272,6 +283,12 @@ export default function TreasuryPage() {
               label="Owner"
               value={info.isOwner ? "You" : info.ownerEmail || "—"}
               accent={info.isOwner ? "var(--green)" : undefined}
+            />
+            <Row
+              label="Multi-sig"
+              value={info.multisig.enabled ? `${info.multisig.threshold}/${info.multisig.signers}` : "OFF"}
+              sub={info.multisig.enabled ? `${info.multisig.threshold} of ${info.multisig.signers} signers required` : "single signer"}
+              accent={info.multisig.enabled ? "var(--green)" : "var(--text-muted)"}
             />
             <Row
               label="Low threshold"
@@ -415,17 +432,51 @@ export default function TreasuryPage() {
             Alerts &amp; policy
           </h2>
           <div className="space-y-4">
-            <PolicyRow
-              icon={<DollarSign />}
-              label="Spend cap"
-              value={`$${info.policy.spendCapDaily.toLocaleString()} / day`}
-            />
+            {/* Spend cap with progress */}
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-[var(--green-dim)] flex items-center justify-center flex-shrink-0" style={{ color: "var(--green)" }}>
+                  <DollarSign />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-[var(--text-muted)]">Spend cap</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)] font-mono-data">
+                    ${info.policy.spendCapDaily.toLocaleString()} <span className="text-[var(--text-muted)] text-xs">/ day</span>
+                  </p>
+                </div>
+                <span className="font-mono-data text-[11px] text-[var(--text-muted)]">
+                  ${info.todaySpent.toFixed(0)} used
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-elevated)" }}>
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(100, (info.todaySpent / info.policy.spendCapDaily) * 100)}%`,
+                    background: info.todaySpent >= info.policy.spendCapDaily
+                      ? "#EF4444"
+                      : info.todaySpent / info.policy.spendCapDaily > 0.8
+                      ? "#F59E0B"
+                      : "var(--green)",
+                  }}
+                />
+              </div>
+            </div>
+
             <PolicyRow
               icon={<ArrowsCircle />}
               label="Single tx limit"
               value={`$${info.policy.txLimit.toLocaleString()}`}
             />
-            <div>
+
+            <PolicyRow
+              icon={<Bolt />}
+              label="Avg confirmation"
+              value={info.avgConfirmMs > 0 ? `${(info.avgConfirmMs / 1000).toFixed(1)}s` : "—"}
+              accent="var(--green)"
+            />
+
+            <div className="pt-2 border-t border-[var(--border)]">
               <p className="text-[11px] text-[var(--text-muted)] mb-2">Notify on:</p>
               <div className="space-y-1.5">
                 <NotifyItem enabled={info.policy.notifyOnPayout} label="Each successful payout" />
@@ -529,7 +580,7 @@ function Row({
   );
 }
 
-function PolicyRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function PolicyRow({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: string }) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-8 h-8 rounded-lg bg-[var(--green-dim)] flex items-center justify-center flex-shrink-0" style={{ color: "var(--green)" }}>
@@ -537,9 +588,17 @@ function PolicyRow({ icon, label, value }: { icon: React.ReactNode; label: strin
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[11px] text-[var(--text-muted)]">{label}</p>
-        <p className="text-sm font-medium text-[var(--text-primary)] font-mono-data">{value}</p>
+        <p className="text-sm font-medium font-mono-data" style={{ color: accent || "var(--text-primary)" }}>{value}</p>
       </div>
     </div>
+  );
+}
+
+function Bolt() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
   );
 }
 

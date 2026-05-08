@@ -131,6 +131,36 @@ export async function GET() {
     notifyOnLow: process.env.TREASURY_NOTIFY_LOW !== "false",
   };
 
+  // Multi-sig info (currently single-sig, would integrate Squads.so for real multi-sig)
+  const multisig = {
+    enabled: process.env.TREASURY_MULTISIG === "true",
+    threshold: Number(process.env.TREASURY_MULTISIG_THRESHOLD ?? 1),
+    signers: Number(process.env.TREASURY_MULTISIG_SIGNERS ?? 1),
+  };
+
+  // Today's spend (for spend cap progress)
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const { data: todayPayouts } = await supabase
+    .from("payouts")
+    .select("amount_usd")
+    .eq("status", "done")
+    .gte("created_at", startOfDay.toISOString());
+  const todaySpent = todayPayouts?.reduce((s, p) => s + Number(p.amount_usd), 0) ?? 0;
+
+  // Avg confirmation time (from settlement_ms)
+  const { data: confirmationsData } = await supabase
+    .from("payouts")
+    .select("settlement_ms")
+    .eq("status", "done")
+    .not("settlement_ms", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const avgConfirmMs =
+    confirmationsData && confirmationsData.length > 0
+      ? confirmationsData.reduce((s, p) => s + (p.settlement_ms || 0), 0) / confirmationsData.length
+      : 0;
+
   const { low, critical } = getThresholds();
   const tier = getTier(balance, pendingSum, low, critical);
 
@@ -152,6 +182,9 @@ export async function GET() {
     recentPayouts: lastDone ?? [],
     outflowChart,
     policy,
+    multisig,
+    todaySpent,
+    avgConfirmMs,
     syncedAt: new Date().toISOString(),
   });
 }
