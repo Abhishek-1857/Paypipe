@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { PayzapLogo, PayzapWordmark } from "@/components/logo";
 import { HeroBoltAnimation } from "@/components/hero-bolt-animation";
-import { ScrollReveal, CountUp, useScrollReveal } from "@/components/scroll-reveal";
+import { ScrollReveal, CountUp } from "@/components/scroll-reveal";
 
 interface LatestPayout {
   amount_usd: number;
