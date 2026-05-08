@@ -212,14 +212,9 @@ export default function TreasuryPage() {
       >
         <span className="text-xl flex-shrink-0">{tier.icon}</span>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold" style={{ color: tier.color }}>
-              {tier.label}
-            </p>
-            <span className="text-[10px] tracking-[0.08em] uppercase font-medium px-1.5 py-0.5 rounded" style={{ color: "var(--text-muted)", background: "var(--bg-elevated)" }}>
-              ALL SYSTEMS
-            </span>
-          </div>
+          <p className="text-sm font-semibold" style={{ color: tier.color }}>
+            {tier.label}
+          </p>
           <p className="text-xs text-[var(--text-secondary)] mt-1">{tier.message}</p>
         </div>
         <div className="text-right flex-shrink-0 hidden md:block">
