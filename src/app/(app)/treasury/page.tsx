@@ -99,6 +99,7 @@ export default function TreasuryPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showRefillModal, setShowRefillModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -175,14 +176,12 @@ export default function TreasuryPage() {
             Refresh
           </button>
           {info.isOwner ? (
-            <a
-              href={`https://faucet.solana.com/?cluster=${info.cluster}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => setShowRefillModal(true)}
               className="px-4 py-2 text-xs rounded-lg font-semibold btn-primary"
             >
               + Refill Treasury
-            </a>
+            </button>
           ) : (
             <button
               onClick={() => setShowRequestModal(true)}
@@ -449,6 +448,14 @@ export default function TreasuryPage() {
           }}
         />
       )}
+
+      {showRefillModal && (
+        <RefillModal
+          fullAddress={info.fullAddress}
+          cluster={info.cluster}
+          onClose={() => setShowRefillModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -575,6 +582,134 @@ function ArrowsCircle() {
       <polyline points="1 20 1 14 7 14" />
       <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
     </svg>
+  );
+}
+
+function RefillModal({
+  fullAddress,
+  cluster,
+  onClose,
+}: {
+  fullAddress: string;
+  cluster: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  async function copyAddress() {
+    await navigator.clipboard.writeText(fullAddress);
+    setCopied(true);
+    toast("Address copied", "success");
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)" }}
+      onClick={onClose}
+    >
+      <div
+        className="card p-6 w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-heading font-bold text-[var(--text-primary)]">Refill Treasury</h2>
+        <p className="text-xs text-[var(--text-muted)] mt-1">
+          Send USDC (SPL token) to this address from any Solana wallet on {cluster}.
+        </p>
+
+        {/* Address with copy */}
+        <div className="mt-5">
+          <label className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium block mb-1.5">
+            Treasury wallet address
+          </label>
+          <div
+            className="flex items-center gap-2 p-3 rounded-lg"
+            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)" }}
+          >
+            <p className="font-mono-data text-xs text-[var(--text-secondary)] break-all flex-1 min-w-0">
+              {fullAddress}
+            </p>
+            <button
+              onClick={copyAddress}
+              className="flex-shrink-0 p-2 rounded-md transition-colors"
+              style={{ background: copied ? "var(--green-dim)" : "transparent", color: copied ? "var(--green)" : "var(--text-muted)" }}
+              title="Copy address"
+            >
+              {copied ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 12 10 16 18 8" />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="mt-5 space-y-3">
+          <p className="text-[11px] tracking-[0.08em] uppercase text-[var(--text-muted)] font-medium">
+            How to refill
+          </p>
+          <ol className="space-y-2.5 text-xs text-[var(--text-secondary)]">
+            <li className="flex gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--green-dim)] text-[var(--green)] flex items-center justify-center text-[10px] font-bold">1</span>
+              <span>Open your wallet (Phantom, Solflare, etc.) and switch to <strong className="text-[var(--text-primary)]">Solana {cluster}</strong>.</span>
+            </li>
+            <li className="flex gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--green-dim)] text-[var(--green)] flex items-center justify-center text-[10px] font-bold">2</span>
+              <span>Paste the address above as the recipient and select <strong className="text-[var(--text-primary)]">USDC (SPL)</strong> as the token.</span>
+            </li>
+            <li className="flex gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--green-dim)] text-[var(--green)] flex items-center justify-center text-[10px] font-bold">3</span>
+              <span>Send any amount. The treasury balance will update on your next refresh.</span>
+            </li>
+          </ol>
+        </div>
+
+        {/* Devnet note */}
+        {cluster === "devnet" && (
+          <div className="mt-4 p-3 rounded-lg" style={{ background: "rgba(99,143,255,0.08)", border: "1px solid rgba(99,143,255,0.2)" }}>
+            <p className="text-[11px] text-[var(--blue)] flex items-start gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <span className="text-[var(--text-secondary)]">
+                On devnet, you need test USDC (not SOL). Use the <a href="https://spl-token-faucet.com/?token-name=USDC-Dev" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "var(--blue)" }}>SPL Token Faucet</a> or transfer from another devnet wallet that holds this mint.
+              </span>
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2 mt-6">
+          <a
+            href={`https://solscan.io/address/${fullAddress}?cluster=${cluster}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium flex items-center gap-1"
+            style={{ color: "var(--green)" }}
+          >
+            View on Solscan
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </a>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-xs rounded-lg font-semibold btn-primary"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
