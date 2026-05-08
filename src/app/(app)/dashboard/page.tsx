@@ -740,13 +740,6 @@ function DashboardContent() {
               </table>
             </div>
           )}
-          {payouts.length > 10 && (
-            <div className="px-5 py-3 border-t border-[var(--border)] text-center">
-              <Link href="/payouts" className="text-xs font-medium text-[var(--green)] hover:underline">
-                View all payouts →
-              </Link>
-            </div>
-          )}
       </div>
       </ScrollReveal>
     </div>
