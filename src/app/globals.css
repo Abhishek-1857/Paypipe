@@ -13,8 +13,8 @@ html { scroll-behavior: smooth; }
   --border: rgba(0,230,160,0.15);
   --border-bright: rgba(0,230,160,0.25);
   --text-primary: #E8ECF4;
-  --text-secondary: #8899B0;
-  --text-muted: #4A5A74;
+  --text-secondary: #A8B5CC;
+  --text-muted: #6B7A95;
   --green: #00E6A0;
   --green-light: #2EE8B5;
   --green-dim: rgba(0,230,160,0.08);

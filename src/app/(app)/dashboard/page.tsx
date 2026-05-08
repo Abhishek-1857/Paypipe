@@ -76,7 +76,7 @@ function InfoCell({
 
   return (
     <div className="rounded-md p-2.5" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)" }}>
-      <p className="text-[9px] tracking-[0.08em] uppercase text-[var(--text-muted)] opacity-60 font-medium">{label}</p>
+      <p className="text-[9px] tracking-[0.08em] uppercase text-[var(--text-secondary)] font-medium">{label}</p>
       <div className="flex items-center justify-between gap-1 mt-1">
         <p
           className={`text-[12px] truncate ${mono ? "font-mono-data" : ""}`}

@@ -215,7 +215,7 @@ export default function TreasuryPage() {
           <p className="text-[10px] text-[var(--text-muted)]">
             ${info.thresholds.low} low · ${info.thresholds.critical} critical
           </p>
-          <p className="text-[10px] text-[var(--text-muted)] opacity-70 mt-0.5">
+          <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
             Last sync: {timeAgo(info.syncedAt)}
           </p>
         </div>
