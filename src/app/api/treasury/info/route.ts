@@ -133,11 +133,12 @@ export async function GET() {
     notifyOnLow: process.env.TREASURY_NOTIFY_LOW !== "false",
   };
 
-  // Multi-sig info (defaults to 2/3 for demo; integrate Squads.so for real multi-sig)
+  // Multi-sig: honest reporting. Single-key wallet by default.
+  // Set TREASURY_MULTISIG=true only if integrated with Squads.so or similar.
   const multisig = {
-    enabled: process.env.TREASURY_MULTISIG !== "false",
-    threshold: Number(process.env.TREASURY_MULTISIG_THRESHOLD ?? 2),
-    signers: Number(process.env.TREASURY_MULTISIG_SIGNERS ?? 3),
+    enabled: process.env.TREASURY_MULTISIG === "true",
+    threshold: Number(process.env.TREASURY_MULTISIG_THRESHOLD ?? 1),
+    signers: Number(process.env.TREASURY_MULTISIG_SIGNERS ?? 1),
   };
 
   // Today's spend (for spend cap progress)

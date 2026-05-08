@@ -220,30 +220,14 @@ export default function TreasuryPage() {
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold" style={{ color: tier.color }}>
-              {tier.label}
-            </p>
-            <span
-              className="text-[9px] tracking-[0.1em] uppercase font-semibold px-1.5 py-0.5 rounded"
-              style={{ color: tier.color, background: "transparent", border: `1px solid ${tier.color}55` }}
-            >
-              ALL SYSTEMS
-            </span>
-          </div>
-          <p className="text-xs text-[var(--text-secondary)] mt-1">
-            {tier.message} <span className="text-[var(--text-muted)]">Next auto-check in 4h.</span>
+          <p className="text-sm font-semibold" style={{ color: tier.color }}>
+            {tier.label}
           </p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">{tier.message}</p>
         </div>
         <div className="text-right flex-shrink-0 hidden md:block">
-          <p className="text-[11px] flex items-center justify-end gap-1.5">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            <span className="text-[var(--text-muted)]">Multi-sig:</span>
-            <span className="font-mono-data" style={{ color: "var(--green)" }}>
-              {info.multisig.threshold} / {info.multisig.signers}
-            </span>
+          <p className="text-[11px] text-[var(--text-muted)]">
+            ${info.thresholds.low} low · ${info.thresholds.critical} critical
           </p>
           <p className="text-[11px] text-[var(--text-muted)] mt-1">
             Last sync: <span className="font-mono-data text-[var(--text-secondary)]">{timeAgo(info.syncedAt)}</span>
@@ -315,7 +299,7 @@ export default function TreasuryPage() {
             <Row
               label="Owner"
               value={info.isOwner ? "You" : info.ownerEmail || "—"}
-              sub="Signer with key #1"
+              sub={info.multisig.enabled ? `${info.multisig.threshold} of ${info.multisig.signers} signers` : "Single-sig (1 key controls wallet)"}
               accent={info.isOwner ? "var(--green)" : undefined}
             />
             <Row
