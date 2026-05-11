@@ -221,20 +221,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </div>
         ) : (
           <div
-            className="rounded-lg px-3 py-2.5"
+            className="rounded-lg px-3 py-3.5"
             style={{
               border: "1px solid var(--border)",
               background: "var(--bg-surface)",
             }}
           >
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-1.5">
               <span className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse-slow" style={{ background: "var(--green)" }} />
-              <span className="text-[11px] font-semibold" style={{ color: "var(--text-primary)" }}>Solana: Operational</span>
+              <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Solana: Operational</span>
             </div>
-            <p className="text-[9px] font-mono-data mb-1" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[10px] font-mono-data mb-1.5" style={{ color: "var(--text-muted)" }}>
               {blockHeight ? `Block ${blockHeight.toLocaleString()}` : "Devnet"} · {slotTime ? `${slotTime} ms` : "~400 ms"}
             </p>
-            <p className="text-[8px] uppercase tracking-[0.1em] font-semibold" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
+            <p className="text-[9px] uppercase tracking-[0.1em] font-semibold" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
               Powered by Dodo Payments
             </p>
           </div>
