@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayZap — Hackathon Presentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #080C14;
+    --surface: #0D1321;
+    --border: rgba(255,255,255,0.06);
+    --green: #00E6A0;
+    --green-dim: rgba(0,230,160,0.1);
+    --amber: #FFAD33;
+    --red: #FF5C5C;
+    --text: #F0F2F5;
+    --text-secondary: #8B95A5;
+    --text-muted: #5A6478;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .deck { height: 100vh; width: 100vw; position: relative; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .slide.active { display: flex; opacity: 1; }
+
+  .slide-number {
+    position: fixed;
+    bottom: 30px;
+    right: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    z-index: 100;
+  }
+
+  .nav-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 40px;
+    font-size: 12px;
+    color: var(--text-muted);
+    z-index: 100;
+  }
+
+  /* Slide 1: Title */
+  .title-slide { text-align: center; gap: 24px; }
+  .title-slide .logo {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #00E6A0, #00B87A);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; font-weight: 900; color: #080C14;
+    box-shadow: 0 0 60px rgba(0,230,160,0.3);
+    margin-bottom: 8px;
+  }
+  .title-slide h1 {
+    font-size: 72px; font-weight: 900;
+    background: linear-gradient(135deg, #00E6A0, #00FFB2);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -2px;
+  }
+  .title-slide .tagline {
+    font-size: 24px; color: var(--text-secondary);
+    max-width: 600px; line-height: 1.5;
+  }
+  .title-slide .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--green-dim); border: 1px solid rgba(0,230,160,0.2);
+    border-radius: 100px; padding: 8px 20px;
+    font-size: 14px; color: var(--green); font-weight: 600;
+  }
+  .title-slide .badge .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); animation: pulse 2s infinite;
+  }
+
+  /* Slide 2: Problem */
+  .problem-slide { text-align: left; align-items: flex-start; gap: 40px; }
+  .problem-slide .label {
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--red);
+  }
+  .problem-slide h2 { font-size: 52px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; }
+  .problem-slide .stats {
+    display: flex; gap: 40px; margin-top: 12px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px 32px; min-width: 200px;
+  }
+  .stat-card .value {
+    font-size: 42px; font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .stat-card .label { font-size: 14px; color: var(--text-secondary); margin-top: 6px; }
+  .stat-card.bad .value { color: var(--red); }
+  .stat-card.good .value { color: var(--green); }
+
+  /* Slide 3: Solution */
+  .solution-slide { text-align: left; align-items: flex-start; gap: 40px; }
+  .solution-slide .label {
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--green);
+  }
+  .solution-slide h2 { font-size: 52px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; }
+  .flow {
+    display: flex; align-items: center; gap: 0; margin-top: 12px; width: 100%;
+  }
+  .flow-step {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px 20px; text-align: center;
+  }
+  .flow-step .icon { font-size: 32px; margin-bottom: 10px; }
+  .flow-step .step-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .flow-step .step-desc { font-size: 12px; color: var(--text-secondary); }
+  .flow-arrow {
+    font-size: 24px; color: var(--green); padding: 0 12px; flex-shrink: 0;
+  }
+
+  /* Slide 4: Features */
+  .features-slide { text-align: left; align-items: flex-start; gap: 36px; }
+  .features-slide .label {
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--green);
+  }
+  .features-slide h2 { font-size: 48px; font-weight: 800; letter-spacing: -1px; }
+  .features-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px; width: 100%;
+  }
+  .feature-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px;
+  }
+  .feature-card .feat-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 12px;
+  }
+  .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .feature-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Slide 5: Dodo Integration */
+  .dodo-slide { text-align: left; align-items: flex-start; gap: 36px; }
+  .dodo-slide .label {
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--amber);
+  }
+  .dodo-slide h2 { font-size: 48px; font-weight: 800; letter-spacing: -1px; }
+  .dodo-slide .desc { font-size: 18px; color: var(--text-secondary); line-height: 1.6; max-width: 800px; }
+  .dodo-steps {
+    display: flex; gap: 20px; width: 100%; margin-top: 8px;
+  }
+  .dodo-step {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; position: relative;
+  }
+  .dodo-step .num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--amber); color: #080C14;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; margin-bottom: 12px;
+  }
+  .dodo-step h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .dodo-step p { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Slide 6: Tech Stack */
+  .tech-slide { text-align: left; align-items: flex-start; gap: 36px; }
+  .tech-slide .label {
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--green);
+  }
+  .tech-slide h2 { font-size: 48px; font-weight: 800; letter-spacing: -1px; }
+  .tech-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px; width: 100%;
+  }
+  .tech-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; text-align: center;
+  }
+  .tech-card .tech-icon { font-size: 36px; margin-bottom: 10px; }
+  .tech-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .tech-card p { font-size: 12px; color: var(--text-secondary); }
+
+  /* Slide 7: Comparison */
+  .compare-slide { text-align: left; align-items: flex-start; gap: 36px; }
+  .compare-slide .label {
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--green);
+  }
+  .compare-slide h2 { font-size: 48px; font-weight: 800; letter-spacing: -1px; }
+  .compare-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .compare-table th {
+    padding: 18px 28px; text-align: left;
+    font-size: 14px; font-weight: 700; color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .compare-table td {
+    padding: 18px 28px; font-size: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table .old { color: var(--red); }
+  .compare-table .new { color: var(--green); font-weight: 700; }
+
+  /* Slide 8: Demo / CTA */
+  .demo-slide { text-align: center; gap: 28px; }
+  .demo-slide h2 {
+    font-size: 56px; font-weight: 900; letter-spacing: -1px;
+    background: linear-gradient(135deg, #00E6A0, #00FFB2);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .demo-slide .desc { font-size: 20px; color: var(--text-secondary); max-width: 600px; line-height: 1.6; }
+  .demo-slide .links {
+    display: flex; gap: 16px; margin-top: 8px;
+  }
+  .demo-slide .link-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 32px; border-radius: 12px;
+    font-size: 16px; font-weight: 700;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .demo-slide .link-btn.primary {
+    background: var(--green); color: #080C14;
+  }
+  .demo-slide .link-btn.secondary {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .demo-slide .built-by {
+    font-size: 14px; color: var(--text-muted); margin-top: 20px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .progress {
+    position: fixed; top: 0; left: 0; height: 3px; z-index: 200;
+    background: linear-gradient(90deg, var(--green), #00FFB2);
+    transition: width 0.3s ease;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="slide-number" id="slideNum"></div>
+<div class="nav-hint">Arrow keys or click to navigate</div>
+
+<div class="deck" id="deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide active">
+    <div class="logo">P</div>
+    <h1>PayZap</h1>
+    <p class="tagline">Pay global contractors via card.<br>Settle instantly in USDC on Solana.</p>
+    <div class="badge">
+      <span class="dot"></span>
+      Dodo Payments x Superteam India Hackathon
+    </div>
+  </div>
+
+  <!-- Slide 2: Problem -->
+  <div class="slide problem-slide">
+    <span class="label">The Problem</span>
+    <h2>Paying global contractors<br>is broken</h2>
+    <div class="stats">
+      <div class="stat-card bad">
+        <div class="value">$28+</div>
+        <div class="label">Per SWIFT wire fee</div>
+      </div>
+      <div class="stat-card bad">
+        <div class="value">3-5 days</div>
+        <div class="label">Settlement time</div>
+      </div>
+      <div class="stat-card bad">
+        <div class="value">5-8%</div>
+        <div class="label">FX conversion loss</div>
+      </div>
+    </div>
+    <p style="font-size: 18px; color: var(--text-secondary); margin-top: 12px; max-width: 700px; line-height: 1.6;">
+      Indian SaaS founders paying global contractors lose money on every single transfer. High fees, slow settlements, and hidden FX markups make cross-border payments painful.
+    </p>
+  </div>
+
+  <!-- Slide 3: Solution -->
+  <div class="slide solution-slide">
+    <span class="label">The Solution</span>
+    <h2>Card in, USDC out.<br>In under 2 seconds.</h2>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="icon">💳</div>
+        <div class="step-title">Founder pays by card</div>
+        <div class="step-desc">Via Dodo Payments<br>hosted checkout</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="icon">⚡</div>
+        <div class="step-title">Webhook fires</div>
+        <div class="step-desc">PayZap processes<br>payment instantly</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="icon">🪙</div>
+        <div class="step-title">USDC sent on Solana</div>
+        <div class="step-desc">Contractor receives<br>in ~1 second</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="icon">📧</div>
+        <div class="step-title">Both get notified</div>
+        <div class="step-desc">Email confirmation<br>to both parties</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: Features -->
+  <div class="slide features-slide">
+    <span class="label">Features</span>
+    <h2>Everything you need to<br>pay contractors</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feat-icon" style="background: var(--green-dim);">💸</div>
+        <h3>Instant Payouts</h3>
+        <p>Single contractor payments via card, settled as USDC on Solana in seconds.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background: rgba(255,173,51,0.1);">📦</div>
+        <h3>Bulk Payouts</h3>
+        <p>Pay multiple contractors at once from a single checkout session.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background: rgba(99,102,241,0.1);">📅</div>
+        <h3>Scheduled Payouts</h3>
+        <p>Monthly recurring schedules with smart due/overdue notifications.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background: var(--green-dim);">👥</div>
+        <h3>Contractor Management</h3>
+        <p>Add contractors with wallet addresses, invite via email, track payments.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background: rgba(255,173,51,0.1);">🏦</div>
+        <h3>Treasury</h3>
+        <p>Monitor hot wallet balance, health tiers, and request devnet refills.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background: rgba(255,92,92,0.1);">🔔</div>
+        <h3>Smart Notifications</h3>
+        <p>5 notification types aggregated in real-time with mark-all-read.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Dodo Integration -->
+  <div class="slide dodo-slide">
+    <span class="label">Dodo Payments Integration</span>
+    <h2>Dodo powers every<br>dollar that flows through</h2>
+    <div class="dodo-steps">
+      <div class="dodo-step">
+        <div class="num">1</div>
+        <h3>Checkout Session</h3>
+        <p>We create a Dodo checkout with contractor + amount metadata via API.</p>
+      </div>
+      <div class="dodo-step">
+        <div class="num">2</div>
+        <h3>Card Payment</h3>
+        <p>Founder pays on Dodo's hosted checkout. Dodo handles compliance and processing.</p>
+      </div>
+      <div class="dodo-step">
+        <div class="num">3</div>
+        <h3>Webhook Trigger</h3>
+        <p>On payment.succeeded, Dodo fires a signed webhook to our backend.</p>
+      </div>
+      <div class="dodo-step">
+        <div class="num">4</div>
+        <h3>USDC Settlement</h3>
+        <p>We verify the signature, record the payout, and send USDC to the contractor's Solana wallet.</p>
+      </div>
+    </div>
+    <p style="font-size: 14px; color: var(--text-muted); margin-top: 16px;">
+      For scheduled payouts, metadata includes schedule IDs — the webhook also advances the recurring schedule automatically.
+    </p>
+  </div>
+
+  <!-- Slide 6: Tech Stack -->
+  <div class="slide tech-slide">
+    <span class="label">Tech Stack</span>
+    <h2>Built with modern tools</h2>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-icon">⚛️</div>
+        <h3>Next.js 14</h3>
+        <p>App Router + TypeScript</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">🗄️</div>
+        <h3>Supabase</h3>
+        <p>Postgres + Auth + RLS</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">💳</div>
+        <h3>Dodo Payments</h3>
+        <p>Fiat card processing</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">◎</div>
+        <h3>Solana</h3>
+        <p>USDC transfers (devnet)</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">🎨</div>
+        <h3>Tailwind CSS</h3>
+        <p>Dark-mode design system</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">📧</div>
+        <h3>Resend</h3>
+        <p>Transactional emails</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Comparison -->
+  <div class="slide compare-slide">
+    <span class="label">Why It Matters</span>
+    <h2>Traditional vs PayZap</h2>
+    <table class="compare-table">
+      <tr>
+        <th></th>
+        <th>Traditional (SWIFT)</th>
+        <th>PayZap</th>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Transaction Fee</td>
+        <td class="old">$28 — $50</td>
+        <td class="new">$0.001</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Settlement Time</td>
+        <td class="old">3 — 5 business days</td>
+        <td class="new">~1 second</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">FX Markup</td>
+        <td class="old">5 — 8%</td>
+        <td class="new">0% (stablecoin)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Availability</td>
+        <td class="old">Banking hours only</td>
+        <td class="new">24/7/365</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Recurring Payments</td>
+        <td class="old">Manual each month</td>
+        <td class="new">Smart scheduling + reminders</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Slide 8: CTA -->
+  <div class="slide demo-slide">
+    <div class="logo" style="width:64px;height:64px;font-size:28px;border-radius:16px;">P</div>
+    <h2>Try PayZap</h2>
+    <p class="desc">The fastest way to pay global contractors.<br>Card in, USDC out, in under 2 seconds.</p>
+    <div class="links">
+      <a href="https://payzap-app.vercel.app" target="_blank" class="link-btn primary">Live Demo →</a>
+      <a href="https://github.com/Abhishek-1857/PayZap" target="_blank" class="link-btn secondary">GitHub →</a>
+    </div>
+    <p class="built-by">Built by Abhishek for the Dodo Payments x Superteam India Hackathon</p>
+  </div>
+
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const slideNum = document.getElementById('slideNum');
+  const progress = document.getElementById('progress');
+  let current = 0;
+
+  function show(idx) {
+    if (idx < 0 || idx >= slides.length) return;
+    slides[current].classList.remove('active');
+    current = idx;
+    slides[current].classList.add('active');
+    slideNum.textContent = `${current + 1} / ${slides.length}`;
+    progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); show(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); show(current - 1); }
+    if (e.key === 'f') { document.documentElement.requestFullscreen?.(); }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.clientX > window.innerWidth / 2) show(current + 1);
+    else show(current - 1);
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>
