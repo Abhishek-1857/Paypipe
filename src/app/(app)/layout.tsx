@@ -23,6 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [scheduledDueCount, setScheduledDueCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,6 +32,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       setUserEmail(data.user?.email ?? null);
     });
   }, []);
+
+  useEffect(() => {
+    fetch("/api/scheduled-payouts")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: { status: string; next_due_date: string }[]) => {
+        if (!Array.isArray(data)) return;
+        const today = new Date().toISOString().split("T")[0];
+        setScheduledDueCount(data.filter((s) => s.status === "active" && s.next_due_date <= today).length);
+      })
+      .catch(() => {});
+  }, [pathname]);
 
   useEffect(() => {
     function onOutsideClick(e: MouseEvent) {
@@ -75,13 +87,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Bell icon */}
             <button
               className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors relative"
-              style={{ color: "var(--text-muted)" }}
-              title="Notifications"
+              style={{ color: scheduledDueCount > 0 ? "var(--text-primary)" : "var(--text-muted)" }}
+              title={scheduledDueCount > 0 ? `${scheduledDueCount} scheduled payout${scheduledDueCount > 1 ? "s" : ""} due` : "Notifications"}
+              onClick={() => { if (scheduledDueCount > 0) window.location.href = "/scheduled-payouts"; }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
+              {scheduledDueCount > 0 && (
+                <span
+                  className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full text-[9px] font-bold animate-pulse"
+                  style={{ background: "#FFAD33", color: "#080C14", border: "2px solid var(--header-bg)" }}
+                >
+                  {scheduledDueCount}
+                </span>
+              )}
             </button>
 
             <TestBadge />
