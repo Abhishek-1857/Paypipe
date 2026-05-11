@@ -722,78 +722,117 @@ export default function ScheduledPayoutsPage() {
             </div>
           </div>
 
-          {/* How it works */}
+          {/* Upcoming Due Dates */}
           <div className="card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: "var(--text-muted)" }}>
-                How it works
-              </p>
-              <p className="text-[10px]" style={{ color: "var(--green)" }}>~30s setup</p>
-            </div>
-            <div className="space-y-0">
-              {[
-                "Set a monthly schedule",
-                "Get reminded when due",
-                "Approve & pay via card",
-                "USDC sent automatically",
-              ].map((step, i, arr) => (
-                <div key={i} className="flex gap-3 items-center">
-                  <div className="flex flex-col items-center flex-shrink-0">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center"
-                      style={{
-                        background: i === 0 ? "rgba(0,230,160,0.12)" : "transparent",
-                        border: `1.5px solid ${i === 0 ? "var(--green)" : "var(--border)"}`,
-                      }}
-                    >
-                      {i === 0 ? (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                      ) : (
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--border)" }} />
-                      )}
-                    </div>
-                    {i < arr.length - 1 && (
-                      <div className="w-px" style={{ height: "20px", background: "var(--border)" }} />
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between flex-1 pb-3 pt-0.5">
-                    <p className="text-xs" style={{ color: i === 0 ? "var(--text-primary)" : "var(--text-muted)" }}>{step}</p>
-                    <p className="text-[10px] font-mono-data" style={{ color: "var(--border-bright)", opacity: 0.5 }}>
-                      {String(i + 1).padStart(2, "0")}
-                    </p>
-                  </div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-4" style={{ color: "var(--text-muted)" }}>
+              Upcoming Due Dates
+            </p>
+            {(() => {
+              const upcoming = schedules
+                .filter((s) => s.status === "active")
+                .sort((a, b) => a.next_due_date.localeCompare(b.next_due_date))
+                .slice(0, 5);
+
+              if (upcoming.length === 0) {
+                return <p className="text-xs" style={{ color: "var(--text-muted)" }}>No upcoming dates</p>;
+              }
+
+              const today = new Date().toISOString().split("T")[0];
+
+              return (
+                <div className="space-y-2.5">
+                  {upcoming.map((s) => {
+                    const isOverdue = s.next_due_date < today;
+                    const isDueToday = s.next_due_date === today;
+                    const dueDate = new Date(s.next_due_date + "T00:00:00");
+                    const formatted = dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+                    return (
+                      <div
+                        key={s.id}
+                        className="flex items-center gap-3 rounded-lg p-2.5"
+                        style={{
+                          background: isOverdue ? "rgba(255,92,92,0.06)" : isDueToday ? "rgba(255,173,51,0.06)" : "var(--bg-elevated)",
+                          border: `1px solid ${isOverdue ? "rgba(255,92,92,0.15)" : isDueToday ? "rgba(255,173,51,0.15)" : "var(--border)"}`,
+                        }}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ background: isOverdue ? "#FF5C5C" : isDueToday ? "#FFAD33" : "var(--green)" }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-[var(--text-primary)] truncate">{s.contractors?.name}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-[10px] font-mono-data font-medium" style={{ color: isOverdue ? "#FF5C5C" : isDueToday ? "#FFAD33" : "var(--text-secondary)" }}>
+                            {isOverdue ? "Overdue" : isDueToday ? "Today" : formatted}
+                          </p>
+                          <p className="text-[9px] font-mono-data" style={{ color: "var(--green)" }}>${Number(s.amount_usd).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
 
-          {/* Pro Tip */}
-          <div
-            className="rounded-xl p-4"
-            style={{
-              background: "linear-gradient(135deg, rgba(0,230,160,0.1) 0%, rgba(0,230,160,0.04) 100%)",
-              border: "1px solid rgba(0,230,160,0.2)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-              </svg>
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--green)" }}>Pro Tip</p>
-            </div>
-            <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-secondary)" }}>
-              Bulk-approve all due payouts on the 1st with one signature — saves ~12 min every month.
+          {/* Recent Payments */}
+          <div className="card p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-4" style={{ color: "var(--text-muted)" }}>
+              Recent Payments
             </p>
-            <button
-              onClick={() => router.push("/bulk-payout")}
-              className="text-xs font-semibold flex items-center gap-1 transition-colors"
-              style={{ color: "var(--green)" }}
-            >
-              Enable bulk-sign
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-              </svg>
-            </button>
+            {(() => {
+              const allPaid = schedules
+                .flatMap((s) =>
+                  s.payments
+                    .filter((p) => p.status === "paid" && p.paid_date)
+                    .map((p) => ({
+                      contractor_name: s.contractors?.name || "Unknown",
+                      amount_usd: Number(s.amount_usd),
+                      paid_date: p.paid_date!,
+                    }))
+                )
+                .sort((a, b) => b.paid_date.localeCompare(a.paid_date))
+                .slice(0, 5);
+
+              if (allPaid.length === 0) {
+                return (
+                  <div className="text-center py-4">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2" style={{ opacity: 0.4 }}>
+                      <rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" />
+                    </svg>
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>No payments yet</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-2">
+                  {allPaid.map((p, i) => {
+                    const date = new Date(p.paid_date);
+                    const formatted = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+                    return (
+                      <div key={i} className="flex items-center justify-between py-1.5" style={{ borderBottom: i < allPaid.length - 1 ? "1px solid var(--border)" : "none" }}>
+                        <div className="flex items-center gap-2">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          <div>
+                            <p className="text-xs font-medium text-[var(--text-primary)]">{p.contractor_name}</p>
+                            <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{formatted}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs font-mono-data font-medium" style={{ color: "var(--green)" }}>
+                          ${p.amount_usd.toFixed(2)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
