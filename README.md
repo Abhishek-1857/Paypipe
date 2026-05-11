@@ -1,15 +1,15 @@
-# Payzap ⚡
+# Remlo
 
 **Pay global contractors via card. Settle instantly in USDC on Solana.**
 
-Payzap replaces $28 SWIFT wires that take 5 days with $0.001 Solana transfers that take 1 second. Built for Indian SaaS founders who pay global contractors.
+Remlo replaces $28 SWIFT wires that take 5 days with $0.001 Solana transfers that take 1 second. Built for founders who pay global contractors.
 
 ## How It Works
 
 ```
-Card Payment (Fiat In)     Payzap Backend         Solana (USDC Out)
+Card Payment (Fiat In)     Remlo Backend          Solana (USDC Out)
 ┌─────────────────┐      ┌──────────────────┐    ┌──────────────────┐
-│  Dodo Payments   │─────▶│  Webhook handler  │───▶│ USDC transfer to │
+│  Dodo Payments   │─────>│  Webhook handler  │───>│ USDC transfer to │
 │  Checkout (USD)  │      │  Process payment  │    │ contractor wallet│
 └─────────────────┘      └──────────────────┘    └──────────────────┘
 ```
@@ -17,13 +17,25 @@ Card Payment (Fiat In)     Payzap Backend         Solana (USDC Out)
 1. **Founder** adds contractors with their Solana wallet addresses
 2. **Founder** initiates a payout → redirected to Dodo Payments checkout (card payment)
 3. **Dodo webhook** fires on successful payment
-4. **Payzap backend** automatically sends USDC to the contractor's Solana wallet
+4. **Remlo backend** automatically sends USDC to the contractor's Solana wallet
 5. **Contractor** receives USDC in ~1 second
+
+## Features
+
+- **Single Payouts** — Pay any contractor via card, settled as USDC on Solana in seconds
+- **Bulk Payouts** — Pay multiple contractors at once from a single checkout
+- **Scheduled Payouts** — Set monthly recurring schedules per contractor (day 1-28), get notified when due, manually approve each cycle
+- **Contractor Management** — Add contractors with name, email, and Solana wallet; invite via email
+- **Treasury** — View hot wallet balance, health tier, request USDC refill on devnet
+- **Notification System** — Bell icon aggregates payout completions, failures, scheduled due/overdue, new contractors, and low treasury alerts with mark-all-read
+- **Live Solana Status** — Sidebar shows real-time block height and RPC latency from Solana devnet
+- **Email Notifications** — Contractor receives payment confirmation, founder gets receipt
+- **Dark Mode UI** — Full dark design system with light mode toggle
 
 ## Tech Stack
 
 - **Next.js 14** (App Router) + TypeScript
-- **Supabase** — Postgres database + magic link auth
+- **Supabase** — Postgres database + magic link auth + RLS
 - **Dodo Payments** — fiat payment processing (test mode)
 - **Solana** — USDC transfers via `@solana/web3.js` + `@solana/spl-token`
 - **Tailwind CSS** — responsive dark-mode UI
@@ -34,15 +46,15 @@ Card Payment (Fiat In)     Payzap Backend         Solana (USDC Out)
 ### 1. Clone and install
 
 ```bash
-git clone <your-repo-url>
-cd payzap
+git clone https://github.com/Abhishek-1857/Remlo.git
+cd Remlo
 npm install
 ```
 
 ### 2. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com)
-2. Go to **SQL Editor** and run the contents of `supabase/schema.sql`
+2. Go to **SQL Editor** and run the contents of `supabase/schema.sql` and all files in `supabase/migrations/`
 3. Go to **Settings > API** and copy your project URL, anon key, and service role key
 4. In **Authentication > URL Configuration**, add `http://localhost:3000/auth/callback` as a redirect URL
 
@@ -61,22 +73,18 @@ npm install
 sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
 
 # Create a new keypair
-solana-keygen new --outfile ~/.config/solana/payzap.json
+solana-keygen new --outfile ~/.config/solana/remlo.json
 
 # Get the base58 private key for .env.local
-node -e "const bs58 = require('bs58'); const key = require('fs').readFileSync(require('os').homedir() + '/.config/solana/payzap.json'); console.log(bs58.encode(Buffer.from(JSON.parse(key))))"
+node -e "const bs58 = require('bs58'); const key = require('fs').readFileSync(require('os').homedir() + '/.config/solana/remlo.json'); console.log(bs58.encode(Buffer.from(JSON.parse(key))))"
 
 # Fund with devnet SOL (needed for tx fees)
 solana airdrop 2 --url devnet
-
-# Get devnet USDC
-# Use the SPL token faucet or Solana devnet faucet to mint test USDC
-# Devnet USDC mint: 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU
 ```
 
 ### 5. Environment Variables
 
-Copy `.env.local` and fill in all values:
+Create `.env.local` and fill in all values:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
@@ -88,6 +96,10 @@ DODO_PAYOUT_PRODUCT_ID=pdt_xxxxx
 SOLANA_RPC_URL=https://api.devnet.solana.com
 SOLANA_HOT_WALLET_KEY=your_bs58_private_key
 NEXT_PUBLIC_URL=http://localhost:3000
+RESEND_API_KEY=re_xxxxx
+TREASURY_OWNER_EMAIL=your@email.com
+TREASURY_LOW_THRESHOLD_USD=500
+TREASURY_CRITICAL_THRESHOLD_USD=100
 ```
 
 ### 6. Run
@@ -101,36 +113,48 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with a magic link, 
 ## End-to-End Test
 
 1. Add a contractor with a valid Solana devnet wallet address
-2. Click **Pay** and enter an amount
+2. Click **Pay** and enter an amount ($1-$10 in test mode)
 3. Click **Pay via Card** — you'll be redirected to Dodo Payments checkout
-4. Use test card: `4111 1111 1111 1111` with any future expiry and any CVC
-5. After payment, you'll be redirected back to Payzap
-6. The webhook fires, Payzap sends USDC on Solana devnet
+4. Use test card: `4242 4242 4242 4242` with any future expiry and any CVC
+5. After payment, you'll be redirected back to the dashboard
+6. The webhook fires, Remlo sends USDC on Solana devnet
 7. Check the transaction on [Solscan (devnet)](https://solscan.io/?cluster=devnet)
+
+### Scheduled Payouts
+
+1. Go to **Scheduled Payouts** and create a schedule (pick contractor, amount, day of month)
+2. When the schedule is due, a notification appears in the bell icon and on the dashboard
+3. Click **Pay Now** to go through the Dodo checkout flow
+4. After payment, the schedule automatically advances to the next month
 
 ## Project Structure
 
 ```
 src/
 ├── app/
-│   ├── (app)/                 # Authenticated layout (nav + test banner)
-│   │   ├── dashboard/         # Stats, recent payouts, retry failed
-│   │   ├── contractors/       # Add/list contractors
-│   │   └── pay/[contractorId] # Pay a specific contractor
+│   ├── (app)/                     # Authenticated layout (sidebar + header)
+│   │   ├── dashboard/             # Stats, recent payouts, quick actions
+│   │   ├── contractors/           # Add/list contractors
+│   │   ├── pay/[contractorId]     # Pay a specific contractor
+│   │   ├── payouts/               # Payout history with filters
+│   │   ├── bulk-payout/           # Multi-contractor payout
+│   │   ├── scheduled-payouts/     # Recurring payment schedules
+│   │   └── treasury/              # Wallet balance and health
 │   ├── api/
-│   │   ├── checkout/          # Create Dodo checkout session
-│   │   ├── webhooks/dodo/     # Handle Dodo payment webhooks
-│   │   ├── payout/[id]/retry/ # Retry failed Solana transfers
-│   │   ├── payouts/           # Query payouts
-│   │   └── contractors/       # CRUD contractors
-│   ├── auth/callback/         # Supabase magic link callback
-│   └── login/                 # Magic link login page
-├── components/                # Toast, nav, status badges, test banner
+│   │   ├── checkout/              # Create Dodo checkout session
+│   │   ├── webhooks/dodo/         # Handle Dodo payment webhooks
+│   │   ├── payouts/               # Query payouts + export
+│   │   ├── contractors/           # CRUD contractors
+│   │   ├── scheduled-payouts/     # CRUD scheduled payouts
+│   │   └── treasury/              # Balance info + refill
+│   ├── auth/callback/             # Supabase magic link callback
+│   └── login/                     # Magic link login page
+├── components/                    # Sidebar, toast, status badges, theme toggle
 └── lib/
-    ├── dodo.ts                # Dodo Payments client + checkout helper
-    ├── solana.ts              # USDC transfer on Solana
-    ├── utils.ts               # Formatters (USD, dates, tx signatures)
-    └── supabase/              # Supabase client (browser + server)
+    ├── dodo.ts                    # Dodo Payments client + checkout helper
+    ├── solana.ts                  # USDC transfer on Solana
+    ├── utils.ts                   # Formatters (USD, dates, tx signatures)
+    └── supabase/                  # Supabase client (browser + server)
 ```
 
 ## Deployment (Vercel)
@@ -143,4 +167,4 @@ src/
 
 ---
 
-Built for the **Dodo Payments x Superteam India** hackathon (Solana Frontier).
+Built for the **Dodo Payments x Superteam India** hackathon.
