@@ -188,18 +188,23 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* Status footer */}
-      <div className="px-3 py-2.5" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
+      <div className="px-3 py-3" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
         {collapsed ? (
           <div className="flex justify-center" title="Solana: Operational">
             <span className="w-2 h-2 rounded-full animate-pulse-slow" style={{ background: "var(--green)" }} />
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse-slow" style={{ background: "var(--green)" }} />
-              <span className="text-[10px] font-medium" style={{ color: "var(--green-text)" }}>Solana: Operational</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse-slow" style={{ background: "var(--green)" }} />
+              <span className="text-[11px] font-semibold" style={{ color: "var(--text-primary)" }}>Solana: Operational</span>
             </div>
-            <p className="text-[9px] text-[var(--text-muted)] leading-tight">Powered by Dodo Payments</p>
+            <p className="text-[9px] font-mono-data mb-1" style={{ color: "var(--text-muted)" }}>
+              Devnet · ~400 ms
+            </p>
+            <p className="text-[8px] uppercase tracking-[0.1em] font-semibold" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
+              Powered by Dodo Payments
+            </p>
           </>
         )}
       </div>

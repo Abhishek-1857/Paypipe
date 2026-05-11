@@ -63,11 +63,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         style={{ marginLeft: collapsed ? "64px" : "200px" }}
       >
         <header className="h-14 flex items-center justify-between px-8 backdrop-blur-sm sticky top-0 z-10" style={{ borderBottom: "1px solid var(--header-border)", background: "var(--header-bg)" }}>
-          <h1 className="font-heading font-semibold text-xl text-[var(--text-primary)]">
-            {title}
-          </h1>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-[var(--text-muted)]">Workspace</span>
+            <span className="text-[var(--text-muted)]" style={{ opacity: 0.4 }}>/</span>
+            <span className="font-medium text-[var(--text-primary)]">{title}</span>
+          </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
+
+            {/* Bell icon */}
+            <button
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors relative"
+              style={{ color: "var(--text-muted)" }}
+              title="Notifications"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </button>
+
             <TestBadge />
 
             {/* User dropdown */}

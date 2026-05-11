@@ -50,6 +50,24 @@ function truncateWallet(wallet: string) {
   return wallet.slice(0, 4) + "..." + wallet.slice(-4);
 }
 
+const AVATAR_COLORS = [
+  ["#00E6A0", "#00B87A"],
+  ["#638FFF", "#4A6FE0"],
+  ["#C084FC", "#9B5DE5"],
+  ["#F59E0B", "#D97706"],
+  ["#EF4444", "#DC2626"],
+  ["#06B6D4", "#0891B2"],
+];
+
+function getAvatarColor(name: string): [string, string] {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length] as [string, string];
+}
+
+type SortOption = "next_due" | "amount" | "name";
+
+
 function getStatusInfo(schedule: ScheduledPayout): { label: string; color: string; bg: string; border: string; isDue: boolean; isOverdue: boolean } {
   if (schedule.status === "paused") {
     return { label: "PAUSED", color: "var(--text-muted)", bg: "var(--bg-elevated)", border: "var(--border)", isDue: false, isOverdue: false };
@@ -90,8 +108,11 @@ export default function ScheduledPayoutsPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState<FilterTab>("all");
+  const [sort, setSort] = useState<SortOption>("next_due");
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   const [formContractorId, setFormContractorId] = useState("");
   const [formAmount, setFormAmount] = useState("");
@@ -105,9 +126,8 @@ export default function ScheduledPayoutsPage() {
 
   useEffect(() => {
     function onOutsideClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenu(null);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null);
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortMenu(false);
     }
     document.addEventListener("mousedown", onOutsideClick);
     return () => document.removeEventListener("mousedown", onOutsideClick);
@@ -203,11 +223,17 @@ export default function ScheduledPayoutsPage() {
     return sum + paid.reduce((ps) => ps + Number(s.amount_usd), 0);
   }, 0);
 
-  const filtered = filter === "all"
+  const filtered = (filter === "all"
     ? schedules
-    : schedules.filter((s) => getFilterCategory(s) === filter);
+    : schedules.filter((s) => getFilterCategory(s) === filter)
+  ).sort((a, b) => {
+    if (sort === "amount") return Number(b.amount_usd) - Number(a.amount_usd);
+    if (sort === "name") return (a.contractors?.name || "").localeCompare(b.contractors?.name || "");
+    return a.next_due_date.localeCompare(b.next_due_date);
+  });
 
-  const currentMonth = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const sortLabels: Record<SortOption, string> = { next_due: "Next due", amount: "Amount", name: "Name" };
+  const currentMonth = new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" });
 
   if (loading) {
     return (
@@ -333,33 +359,85 @@ export default function ScheduledPayoutsPage() {
             </div>
           )}
 
-          {/* Filter Tabs */}
+          {/* Filter Tabs + Sort */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}>
-              {([
-                { key: "all", label: "All" },
-                { key: "due", label: "Due", dot: true },
-                { key: "upcoming", label: "Upcoming" },
-                { key: "paused", label: "Paused" },
-              ] as { key: FilterTab; label: string; dot?: boolean }[]).map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setFilter(tab.key)}
-                  className="text-xs font-medium px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5"
-                  style={{
-                    background: filter === tab.key ? "var(--bg-elevated)" : "transparent",
-                    color: filter === tab.key ? "var(--text-primary)" : "var(--text-muted)",
-                    border: filter === tab.key ? "1px solid var(--border)" : "1px solid transparent",
-                  }}
-                >
-                  {tab.dot && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#FFAD33" }} />}
-                  {tab.label}
-                </button>
-              ))}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-0.5 p-0.5 rounded-lg" style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+                {([
+                  { key: "all", label: "All" },
+                  { key: "due", label: "Due", dot: true },
+                  { key: "upcoming", label: "Upcoming" },
+                  { key: "paused", label: "Paused" },
+                ] as { key: FilterTab; label: string; dot?: boolean }[]).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setFilter(tab.key)}
+                    className="text-xs font-medium px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5"
+                    style={{
+                      background: filter === tab.key ? "var(--bg-elevated)" : "transparent",
+                      color: filter === tab.key ? "var(--text-primary)" : "var(--text-muted)",
+                      border: filter === tab.key ? "1px solid var(--border)" : "1px solid transparent",
+                    }}
+                  >
+                    {tab.dot && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#FFAD33" }} />}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Showing {filtered.length} schedule{filtered.length !== 1 ? "s" : ""}
+              </span>
             </div>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Showing {filtered.length} schedule{filtered.length !== 1 ? "s" : ""}
-            </p>
+
+            <div className="flex items-center gap-2">
+              {/* Filter button */}
+              <button
+                className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                style={{ background: "var(--bg-elevated)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+                Filter
+              </button>
+
+              {/* Sort dropdown */}
+              <div className="relative" ref={sortRef}>
+                <button
+                  onClick={() => setShowSortMenu(!showSortMenu)}
+                  className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                  style={{ background: "var(--bg-elevated)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                >
+                  Sort: {sortLabels[sort]}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: showSortMenu ? "rotate(180deg)" : "none", transition: "transform 200ms" }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {showSortMenu && (
+                  <div
+                    className="absolute right-0 top-full mt-1 w-36 rounded-xl overflow-hidden z-50 animate-fade-in"
+                    style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}
+                  >
+                    {(["next_due", "amount", "name"] as SortOption[]).map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => { setSort(opt); setShowSortMenu(false); }}
+                        className="w-full text-left px-3 py-2 text-xs transition-colors hover:bg-[var(--bg-hover)]"
+                        style={{ color: sort === opt ? "var(--green)" : "var(--text-primary)" }}
+                      >
+                        {sortLabels[opt]}
+                        {sort === opt && (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="inline ml-2">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Schedule Cards */}
@@ -388,7 +466,6 @@ export default function ScheduledPayoutsPage() {
                 const statusInfo = getStatusInfo(schedule);
                 const showPayNow = isDueOrOverdue(schedule);
                 const paidCount = schedule.payments.filter((p) => p.status === "paid").length;
-                const walletShort = c ? truncateWallet(c.solana_wallet) : "";
                 const amountWhole = Math.floor(Number(schedule.amount_usd));
                 const amountCents = (Number(schedule.amount_usd) % 1).toFixed(2).slice(1);
 
@@ -408,14 +485,19 @@ export default function ScheduledPayoutsPage() {
                     <div className="flex items-center gap-4">
                       {/* Avatar with status ring */}
                       <div className="relative flex-shrink-0">
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center"
-                          style={{ background: "linear-gradient(135deg, var(--green-light), var(--green))" }}
-                        >
-                          <span className="text-sm font-bold" style={{ color: "var(--bg-base)" }}>
-                            {c ? getInitials(c.name) : "?"}
-                          </span>
-                        </div>
+                        {(() => {
+                          const [c1, c2] = c ? getAvatarColor(c.name) : ["#00E6A0", "#00B87A"];
+                          return (
+                            <div
+                              className="w-12 h-12 rounded-full flex items-center justify-center"
+                              style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                            >
+                              <span className="text-sm font-bold" style={{ color: "#fff" }}>
+                                {c ? getInitials(c.name) : "?"}
+                              </span>
+                            </div>
+                          );
+                        })()}
                         {schedule.status === "active" && (
                           <span
                             className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2"
@@ -442,9 +524,9 @@ export default function ScheduledPayoutsPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
-                          {walletShort && (
+                          {c?.solana_wallet && (
                             <>
-                              <span className="font-mono-data" style={{ color: "var(--green)" }}>{walletShort}</span>
+                              <span className="font-mono-data" style={{ color: "var(--green)" }}>{truncateWallet(c.solana_wallet)}</span>
                               <span style={{ opacity: 0.3 }}>·</span>
                             </>
                           )}
@@ -689,19 +771,29 @@ export default function ScheduledPayoutsPage() {
           <div
             className="rounded-xl p-4"
             style={{
-              background: "linear-gradient(135deg, rgba(0,230,160,0.08) 0%, rgba(0,230,160,0.03) 100%)",
-              border: "1px solid rgba(0,230,160,0.15)",
+              background: "linear-gradient(135deg, rgba(0,230,160,0.1) 0%, rgba(0,230,160,0.04) 100%)",
+              border: "1px solid rgba(0,230,160,0.2)",
             }}
           >
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
               </svg>
               <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--green)" }}>Pro Tip</p>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-              Schedule all your contractor payouts for the 1st of the month — review and approve them all in one session.
+            <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-secondary)" }}>
+              Bulk-approve all due payouts on the 1st with one signature — saves ~12 min every month.
             </p>
+            <button
+              onClick={() => router.push("/bulk-payout")}
+              className="text-xs font-semibold flex items-center gap-1 transition-colors"
+              style={{ color: "var(--green)" }}
+            >
+              Enable bulk-sign
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
