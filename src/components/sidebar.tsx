@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PayzapLogo, PayzapWordmark } from "@/components/logo";
@@ -94,6 +95,20 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const [scheduledDueCount, setScheduledDueCount] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/scheduled-payouts")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: { status: string; next_due_date: string }[]) => {
+        if (!Array.isArray(data)) return;
+        const today = new Date().toISOString().split("T")[0];
+        setScheduledDueCount(
+          data.filter((s) => s.status === "active" && s.next_due_date <= today).length
+        );
+      })
+      .catch(() => {});
+  }, [pathname]);
 
   return (
     <aside
@@ -148,7 +163,25 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r bg-[var(--green)]" style={{ boxShadow: '2px 0 8px var(--green-dim)' }} />
               )}
               {item.icon}
-              {!collapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
+              {!collapsed && (
+                <>
+                  <span className="font-medium whitespace-nowrap">{item.label}</span>
+                  {item.href === "/scheduled-payouts" && scheduledDueCount > 0 && (
+                    <span
+                      className="ml-auto text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full"
+                      style={{ background: "var(--green)", color: "var(--bg-base)" }}
+                    >
+                      {scheduledDueCount}
+                    </span>
+                  )}
+                </>
+              )}
+              {collapsed && item.href === "/scheduled-payouts" && scheduledDueCount > 0 && (
+                <span
+                  className="absolute top-1 right-1 w-2 h-2 rounded-full"
+                  style={{ background: "var(--green)" }}
+                />
+              )}
             </Link>
           );
         })}
