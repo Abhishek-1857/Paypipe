@@ -258,6 +258,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
+  // ── Scheduled payout fulfillment ──────────────────────────────────────
+  const scheduledPayoutId = metadata.scheduled_payout_id;
+  const scheduledPaymentId = metadata.scheduled_payment_id;
+
+  if (scheduledPayoutId && scheduledPaymentId && txSig) {
+    const now = new Date();
+
+    await supabase
+      .from("scheduled_payout_payments")
+      .update({
+        status: "paid",
+        paid_date: now.toISOString(),
+        payout_id: payout.id,
+      })
+      .eq("id", scheduledPaymentId);
+
+    const { data: schedule } = await supabase
+      .from("scheduled_payouts")
+      .select("day_of_month")
+      .eq("id", scheduledPayoutId)
+      .single();
+
+    if (schedule) {
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, schedule.day_of_month);
+      const nextDueDateStr = nextMonth.toISOString().split("T")[0];
+
+      await supabase
+        .from("scheduled_payouts")
+        .update({
+          last_paid_date: now.toISOString().split("T")[0],
+          next_due_date: nextDueDateStr,
+        })
+        .eq("id", scheduledPayoutId);
+
+      await supabase.from("scheduled_payout_payments").insert({
+        scheduled_payout_id: scheduledPayoutId,
+        due_date: nextDueDateStr,
+        status: "pending",
+      });
+    }
+  }
+
   if (txSig) {
     let founderEmail = payment.customer?.email as string | undefined;
 

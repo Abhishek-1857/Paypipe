@@ -125,6 +125,7 @@ function DashboardContent() {
   const [exporting, setExporting] = useState(false);
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
+  const [scheduledDue, setScheduledDue] = useState(0);
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
@@ -172,6 +173,7 @@ function DashboardContent() {
   useEffect(() => {
     fetchPayouts();
     fetchContractors();
+    fetchScheduledDue();
   }, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -190,6 +192,20 @@ function DashboardContent() {
   async function fetchContractors() {
     const res = await fetch("/api/contractors");
     if (res.ok) setContractors(await res.json());
+  }
+
+  async function fetchScheduledDue() {
+    try {
+      const res = await fetch("/api/scheduled-payouts");
+      if (res.ok) {
+        const all = await res.json();
+        const today = new Date().toISOString().split("T")[0];
+        const due = (all as { status: string; next_due_date: string }[]).filter(
+          (s) => s.status === "active" && s.next_due_date <= today
+        );
+        setScheduledDue(due.length);
+      }
+    } catch {}
   }
 
   async function fetchWalletBalance() {
@@ -350,6 +366,42 @@ function DashboardContent() {
   return (
     <div className="animate-fade-in relative z-[1] dash-bg">
       <div className="dash-orb" />
+      {/* Scheduled payouts due banner */}
+      {scheduledDue > 0 && (
+        <div
+          className="card p-4 mb-5 flex items-center justify-between animate-fade-in"
+          style={{ borderColor: "rgba(255,173,51,0.3)", background: "rgba(255,173,51,0.05)" }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: "rgba(255,173,51,0.12)", border: "1px solid rgba(255,173,51,0.2)" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFAD33" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                {scheduledDue} scheduled payout{scheduledDue > 1 ? "s" : ""} due
+              </p>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                Review and approve payments
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/scheduled-payouts"
+            className="text-xs font-medium px-4 py-2 rounded-lg transition-colors"
+            style={{ background: "rgba(255,173,51,0.12)", color: "#FFAD33", border: "1px solid rgba(255,173,51,0.2)" }}
+          >
+            View Scheduled →
+          </Link>
+        </div>
+      )}
+
       {/* Stat Cards — Two-row grid */}
       <ScrollReveal>
       <div className="dash-stats-grid mb-5 stagger-children">

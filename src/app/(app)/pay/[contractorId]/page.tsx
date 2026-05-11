@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/toast";
 import { WalletAddress } from "@/components/wallet-address";
 import { BoltAnimation, BoltIconAnimated } from "@/components/bolt-animation";
@@ -33,12 +33,16 @@ export default function PayPage({
 }) {
   const { contractorId } = params;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [contractor, setContractor] = useState<Contractor | null>(null);
   const [totalPaid, setTotalPaid] = useState(0);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(() => searchParams.get("amount") || "");
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const { toast } = useToast();
+
+  const scheduledPayoutId = searchParams.get("scheduled_payout_id");
+  const scheduledPaymentId = searchParams.get("scheduled_payment_id");
 
   useEffect(() => {
     Promise.all([
@@ -66,7 +70,12 @@ export default function PayPage({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contractorId, amountUsd: amountNum }),
+        body: JSON.stringify({
+          contractorId,
+          amountUsd: amountNum,
+          ...(scheduledPayoutId && { scheduledPayoutId }),
+          ...(scheduledPaymentId && { scheduledPaymentId }),
+        }),
       });
       const data = await res.json();
       if (res.ok && data.checkout_url) {
@@ -134,6 +143,27 @@ export default function PayPage({
       <div className="flex gap-8 items-start">
         {/* ── LEFT COLUMN (55%) ── */}
         <div className="flex-[11_11_0%] min-w-0">
+          {/* Scheduled payout banner */}
+          {scheduledPayoutId && (
+            <div
+              className="card p-3 mb-4 flex items-center gap-3"
+              style={{
+                borderLeftWidth: "3px",
+                borderLeftColor: "#FFAD33",
+                background: "rgba(255,173,51,0.05)",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFAD33" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <p className="text-xs font-medium" style={{ color: "#FFAD33" }}>
+                Paying scheduled payout
+              </p>
+            </div>
+          )}
+
           {/* Contractor card */}
           <div className="card p-5 mb-4" style={{ borderColor: "rgba(0,230,160,0.15)" }}>
             <div className="flex items-center gap-4">

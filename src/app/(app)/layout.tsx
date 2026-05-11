@@ -14,6 +14,7 @@ const pageTitles: Record<string, string> = {
   "/bulk-payout": "Bulk Payout",
   "/payouts": "Payout History",
   "/pay": "Send Payment",
+  "/scheduled-payouts": "Scheduled Payouts",
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

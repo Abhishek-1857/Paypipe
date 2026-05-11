@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { contractorId, amountUsd } = await request.json();
+  const { contractorId, amountUsd, scheduledPayoutId, scheduledPaymentId } = await request.json();
 
   if (!contractorId || !amountUsd || amountUsd < 1 || amountUsd > 10) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
@@ -46,7 +46,9 @@ export async function POST(request: NextRequest) {
       amountUsd,
       user.email!,
       user.id,
-      payout.id
+      payout.id,
+      scheduledPayoutId,
+      scheduledPaymentId
     );
 
     return NextResponse.json({ checkout_url: session.checkout_url });
